@@ -24,6 +24,24 @@ func NewCourseService(db *gorm.DB, cfg *config.Config) *CourseService {
 	return &CourseService{db: db, config: cfg}
 }
 
+// CalculateCourseProgress calculates the progress percentage for a user in a specific course
+func (cs *CourseService) CalculateCourseProgress(userID, courseID string) (float64, int64, int64) {
+	var totalModules, completedModules int64
+
+	cs.db.Model(&models.Module{}).Where("course_id = ?", courseID).Count(&totalModules)
+	cs.db.Model(&models.UserModuleProgress{}).
+		Joins("JOIN modules ON user_module_progresses.module_id = modules.id").
+		Where("user_module_progresses.user_id = ? AND modules.course_id = ? AND user_module_progresses.is_completed = ?",
+			userID, courseID, true).Count(&completedModules)
+
+	percentage := float64(0)
+	if totalModules > 0 {
+		percentage = float64(completedModules) / float64(totalModules) * 100
+	}
+
+	return percentage, totalModules, completedModules
+}
+
 func (cs *CourseService) CreateCourse(course *models.Course) (*models.Course, error) {
 	if err := cs.db.Create(course).Error; err != nil {
 		return nil, err
@@ -96,25 +114,39 @@ func (cs *CourseService) GetCourseByID(id string, userID interface{}) (map[strin
 	}
 
 	isPurchased := false
+	progressPercentage := float64(0)
+	completedModules := int64(0)
+	totalModules := int64(len(course.Modules))
+
 	if userID != nil {
 		// Check if user purchased this course
 		var userCourse models.UserCourse
 		err := cs.db.Where("user_id = ? AND course_id = ?", userID, course.ID).First(&userCourse).Error
 		isPurchased = (err == nil)
+
+		// Calculate progress if course is purchased
+		if isPurchased {
+			userIDStr, ok := userID.(string)
+			if ok {
+				progressPercentage, totalModules, completedModules = cs.CalculateCourseProgress(userIDStr, id)
+			}
+		}
 	}
 
 	result := map[string]interface{}{
-		"id":              course.ID,
-		"title":           course.Title,
-		"description":     course.Description,
-		"instructor":      course.Instructor,
-		"topics":          course.Topics,
-		"price":           course.Price,
-		"thumbnail_image": course.Thumbnail,
-		"total_modules":   len(course.Modules),
-		"created_at":      course.CreatedAt,
-		"updated_at":      course.UpdatedAt,
-		"is_purchased":    isPurchased,
+		"id":                  course.ID,
+		"title":               course.Title,
+		"description":         course.Description,
+		"instructor":          course.Instructor,
+		"topics":              course.Topics,
+		"price":               course.Price,
+		"thumbnail_image":     course.Thumbnail,
+		"total_modules":       totalModules,
+		"completed_modules":   completedModules,
+		"progress_percentage": progressPercentage,
+		"created_at":          course.CreatedAt,
+		"updated_at":          course.UpdatedAt,
+		"is_purchased":        isPurchased,
 	}
 
 	return result, nil
@@ -226,29 +258,21 @@ func (cs *CourseService) GetMyCourses(userID, query string, page, limit int) ([]
 	// Convert to response format
 	result := make([]map[string]interface{}, len(userCourses))
 	for i, userCourse := range userCourses {
-		// Calculate progress percentage
-		var totalModules int64
-		var completedModules int64
-
-		cs.db.Model(&models.Module{}).Where("course_id = ?", userCourse.CourseID).Count(&totalModules)
-		cs.db.Model(&models.UserModuleProgress{}).
-			Joins("JOIN modules ON user_module_progress.module_id = modules.id").
-			Where("user_module_progress.user_id = ? AND modules.course_id = ? AND user_module_progress.is_completed = ?",
-				userID, userCourse.CourseID, true).Count(&completedModules)
-
-		progressPercentage := float64(0)
-		if totalModules > 0 {
-			progressPercentage = float64(completedModules) / float64(totalModules) * 100
-		}
+		// Calculate progress percentage using centralized logic
+		progressPercentage, totalModules, completedModules := cs.CalculateCourseProgress(userID, userCourse.CourseID)
 
 		result[i] = map[string]interface{}{
 			"id":                  userCourse.Course.ID,
 			"title":               userCourse.Course.Title,
 			"instructor":          userCourse.Course.Instructor,
+			"description":         userCourse.Course.Description,
 			"topics":              userCourse.Course.Topics,
+			"price":               userCourse.Course.Price,
 			"thumbnail_image":     userCourse.Course.Thumbnail,
 			"progress_percentage": progressPercentage,
-			"purchased_at":        userCourse.PurchasedAt,
+			"total_modules":       totalModules,
+			"completed_modules":   completedModules,
+			"purchased_at":        userCourse.PurchasedAt.Format("Jan 2, 2006"),
 		}
 	}
 

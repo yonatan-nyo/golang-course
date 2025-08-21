@@ -54,9 +54,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	webAdminCourseCtrl := webAdminCourse.NewCourseController(courseService)
 	webAdminUserCtrl := webAdminUser.NewUserController(userService)
 	webAdminModuleCtrl := webAdminModule.NewModuleController(moduleService)
-	webUserDashboardCtrl := webUserDashboard.NewDashboardController(courseService, userService)
-	webUserCourseCtrl := webUserCourse.NewCourseController(courseService, moduleService)
-	webUserModuleCtrl := webUserModule.NewModuleController(moduleService)
+	webUserDashboardCtrl := webUserDashboard.NewDashboardController(courseService, userService, moduleService)
+	webUserCourseCtrl := webUserCourse.NewCourseController(courseService)
+	webUserModuleCtrl := webUserModule.NewModuleController(moduleService, courseService)
 
 	apiAuthCtrl := apiAuth.NewAuthAPIController(authService)
 	apiAdminCourseCtrl := apiAdminCourse.NewCourseAPIController(courseService)

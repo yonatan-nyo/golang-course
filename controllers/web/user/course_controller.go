@@ -3,6 +3,8 @@ package user
 import (
 	"net/http"
 	"strconv"
+	"yonatan/labpro/config"
+	"yonatan/labpro/database"
 	"yonatan/labpro/models"
 	"yonatan/labpro/services"
 
@@ -11,13 +13,11 @@ import (
 
 type CourseController struct {
 	courseService *services.CourseService
-	moduleService *services.ModuleService
 }
 
-func NewCourseController(courseService *services.CourseService, moduleService *services.ModuleService) *CourseController {
+func NewCourseController(courseService *services.CourseService) *CourseController {
 	return &CourseController{
 		courseService: courseService,
-		moduleService: moduleService,
 	}
 }
 
@@ -77,7 +77,9 @@ func (cc *CourseController) ShowCourseDetail(c *gin.Context) {
 	}
 
 	// Get course modules
-	modules, _, err := cc.moduleService.GetModules(courseID, userModel.ID, 1, 100)
+	cfg := config.Load()
+	moduleService := services.NewModuleService(database.DB, cfg)
+	modules, _, err := moduleService.GetModules(courseID, userModel.ID, 1, 100)
 	if err != nil {
 		modules = []map[string]interface{}{} // Default to empty slice
 	}
@@ -103,8 +105,8 @@ func (cc *CourseController) ShowMyCourses(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "12"))
 
-	// Get user's enrolled courses
-	enrolledCourses, pagination, err := cc.courseService.GetCourses("", page, limit, userModel.ID)
+	// Get user's purchased courses with progress information
+	enrolledCourses, pagination, err := cc.courseService.GetMyCourses(userModel.ID, "", page, limit)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "my-courses.html", gin.H{
 			"Title": "My Courses",

@@ -171,17 +171,20 @@
           }
         }
 
-        // Also check localStorage for consistency
-        const isLoggedIn = localStorage.getItem("isLoggedIn");
-        const userRole = localStorage.getItem("userRole");
-
-        if (hasToken || isLoggedIn === "true") {
+        // Only redirect if we have a valid token cookie
+        // Don't rely on localStorage alone as it might be stale
+        if (hasToken) {
+          const userRole = localStorage.getItem("userRole");
           // Redirect based on role
           if (userRole === "admin") {
             window.location.href = "/admin/dashboard";
           } else {
             window.location.href = "/dashboard";
           }
+        } else {
+          // Clear stale localStorage if no token
+          localStorage.removeItem("isLoggedIn");
+          localStorage.removeItem("userRole");
         }
       });
 

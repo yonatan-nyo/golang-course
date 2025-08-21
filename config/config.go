@@ -12,6 +12,7 @@ type Config struct {
 	JWTSecret   string
 	Port        string
 	Environment string
+	BaseURL     string
 }
 
 func Load() *Config {
@@ -25,6 +26,7 @@ func Load() *Config {
 		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
 		Port:        getEnv("PORT", "8080"),
 		Environment: getEnv("ENVIRONMENT", "development"),
+		BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
 	}
 }
 

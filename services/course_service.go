@@ -9,17 +9,19 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"yonatan/labpro/config"
 	"yonatan/labpro/models"
 
 	"gorm.io/gorm"
 )
 
 type CourseService struct {
-	db *gorm.DB
+	db     *gorm.DB
+	config *config.Config
 }
 
-func NewCourseService(db *gorm.DB) *CourseService {
-	return &CourseService{db: db}
+func NewCourseService(db *gorm.DB, cfg *config.Config) *CourseService {
+	return &CourseService{db: db, config: cfg}
 }
 
 func (cs *CourseService) CreateCourse(course *models.Course) (*models.Course, error) {
@@ -38,8 +40,8 @@ func (cs *CourseService) GetCourses(query string, page, limit int, userID interf
 	// Apply search filter
 	if query != "" {
 		searchTerm := "%" + strings.ToLower(query) + "%"
-		db = db.Where("LOWER(title) LIKE ? OR LOWER(instructor) LIKE ? OR EXISTS (SELECT 1 FROM unnest(topics) AS topic WHERE LOWER(topic) LIKE ?)",
-			searchTerm, searchTerm, searchTerm)
+		db = db.Where("LOWER(title) LIKE ? OR EXISTS (SELECT 1 FROM unnest(topics) AS topic WHERE LOWER(topic) LIKE ?)",
+			searchTerm, searchTerm)
 	}
 
 	// Count total
@@ -69,7 +71,7 @@ func (cs *CourseService) GetCourses(query string, page, limit int, userID interf
 			"description":     course.Description,
 			"topics":          course.Topics,
 			"price":           course.Price,
-			"thumbnail_image": course.ThumbnailImage,
+			"thumbnail_image": course.Thumbnail,
 			"total_modules":   len(course.Modules),
 			"created_at":      course.CreatedAt,
 			"updated_at":      course.UpdatedAt,
@@ -108,7 +110,7 @@ func (cs *CourseService) GetCourseByID(id string, userID interface{}) (map[strin
 		"instructor":      course.Instructor,
 		"topics":          course.Topics,
 		"price":           course.Price,
-		"thumbnail_image": course.ThumbnailImage,
+		"thumbnail_image": course.Thumbnail,
 		"total_modules":   len(course.Modules),
 		"created_at":      course.CreatedAt,
 		"updated_at":      course.UpdatedAt,
@@ -244,7 +246,7 @@ func (cs *CourseService) GetMyCourses(userID, query string, page, limit int) ([]
 			"title":               userCourse.Course.Title,
 			"instructor":          userCourse.Course.Instructor,
 			"topics":              userCourse.Course.Topics,
-			"thumbnail_image":     userCourse.Course.ThumbnailImage,
+			"thumbnail_image":     userCourse.Course.Thumbnail,
 			"progress_percentage": progressPercentage,
 			"purchased_at":        userCourse.PurchasedAt,
 		}
@@ -290,6 +292,6 @@ func (cs *CourseService) SaveThumbnail(file *multipart.FileHeader) (string, erro
 		return "", err
 	}
 
-	// Return relative URL
-	return fmt.Sprintf("/uploads/thumbnails/%s", filename), nil
+	// Return complete URL including base URL from config
+	return fmt.Sprintf("%s/uploads/thumbnails/%s", cs.config.BaseURL, filename), nil
 }

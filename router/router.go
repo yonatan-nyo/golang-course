@@ -1,7 +1,21 @@
 package router
 
 import (
-	"yonatan/labpro/controllers"
+	"yonatan/labpro/config"
+	apiAuth "yonatan/labpro/controllers/api"
+	apiAdminCourse "yonatan/labpro/controllers/api/admin"
+	apiAdminModule "yonatan/labpro/controllers/api/admin"
+	apiAdminUser "yonatan/labpro/controllers/api/admin"
+	apiUserCourse "yonatan/labpro/controllers/api/user"
+	apiUserModule "yonatan/labpro/controllers/api/user"
+	webAuthController "yonatan/labpro/controllers/web"
+	webAdminCourse "yonatan/labpro/controllers/web/admin"
+	webAdminDashboard "yonatan/labpro/controllers/web/admin"
+	webAdminModule "yonatan/labpro/controllers/web/admin"
+	webAdminUser "yonatan/labpro/controllers/web/admin"
+	webUserCourse "yonatan/labpro/controllers/web/user"
+	webUserDashboard "yonatan/labpro/controllers/web/user"
+	webUserModule "yonatan/labpro/controllers/web/user"
 	"yonatan/labpro/database"
 	"yonatan/labpro/routes/api"
 	"yonatan/labpro/routes/web"
@@ -11,7 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
 	// CORS configuration
@@ -30,23 +44,34 @@ func SetupRouter() *gin.Engine {
 
 	// Initialize services
 	authService := services.NewAuthService()
-	courseService := services.NewCourseService(db)
-	moduleService := services.NewModuleService(db)
+	courseService := services.NewCourseService(db, cfg)
+	moduleService := services.NewModuleService(db, cfg)
 	userService := services.NewUserService(db)
 
 	// Initialize controllers
-	authController := controllers.NewAuthController(authService)
-	courseController := controllers.NewCourseController(courseService)
-	moduleController := controllers.NewModuleController(moduleService)
-	userController := controllers.NewUserController(userService)
+	webAuthCtrl := webAuthController.NewAuthController(authService)
+	webAdminDashboardCtrl := webAdminDashboard.NewDashboardController()
+	webAdminCourseCtrl := webAdminCourse.NewCourseController(courseService)
+	webAdminUserCtrl := webAdminUser.NewUserController(userService)
+	webAdminModuleCtrl := webAdminModule.NewModuleController(moduleService)
+	webUserDashboardCtrl := webUserDashboard.NewDashboardController(courseService, userService)
+	webUserCourseCtrl := webUserCourse.NewCourseController(courseService, moduleService)
+	webUserModuleCtrl := webUserModule.NewModuleController(moduleService)
+
+	apiAuthCtrl := apiAuth.NewAuthAPIController(authService)
+	apiAdminCourseCtrl := apiAdminCourse.NewCourseAPIController(courseService)
+	apiAdminModuleCtrl := apiAdminModule.NewModuleAPIController(moduleService)
+	apiAdminUserCtrl := apiAdminUser.NewUserAPIController(userService)
+	apiUserCourseCtrl := apiUserCourse.NewCourseAPIController(courseService)
+	apiUserModuleCtrl := apiUserModule.NewModuleAPIController(moduleService)
 
 	// Setup web routes (HTML pages)
-	web.SetupWebRoutes(r, authController)
+	web.SetupWebRoutes(r, webAuthCtrl, webAdminDashboardCtrl, webAdminCourseCtrl, webAdminUserCtrl, webAdminModuleCtrl, webUserDashboardCtrl, webUserCourseCtrl, webUserModuleCtrl)
 
 	// Setup API routes
 	apiGroup := r.Group("/api")
 	{
-		api.SetupAPIRoutes(apiGroup, authController, courseController, moduleController, userController)
+		api.SetupAPIRoutes(apiGroup, apiAuthCtrl, apiAdminCourseCtrl, apiAdminModuleCtrl, apiAdminUserCtrl, apiUserCourseCtrl, apiUserModuleCtrl)
 	}
 
 	return r

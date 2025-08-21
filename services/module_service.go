@@ -8,17 +8,19 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"yonatan/labpro/config"
 	"yonatan/labpro/models"
 
 	"gorm.io/gorm"
 )
 
 type ModuleService struct {
-	db *gorm.DB
+	db     *gorm.DB
+	config *config.Config
 }
 
-func NewModuleService(db *gorm.DB) *ModuleService {
-	return &ModuleService{db: db}
+func NewModuleService(db *gorm.DB, cfg *config.Config) *ModuleService {
+	return &ModuleService{db: db, config: cfg}
 }
 
 func (ms *ModuleService) CreateModule(courseID, title, description string, pdfURL, videoURL *string) (*models.Module, error) {
@@ -303,8 +305,8 @@ func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) {
 		return "", err
 	}
 
-	// Return relative URL
-	return fmt.Sprintf("/uploads/pdfs/%s", filename), nil
+	// Return complete URL including base URL from config
+	return fmt.Sprintf("%s/uploads/pdfs/%s", ms.config.BaseURL, filename), nil
 }
 
 func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
@@ -337,8 +339,8 @@ func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
 		return "", err
 	}
 
-	// Return relative URL
-	return fmt.Sprintf("/uploads/videos/%s", filename), nil
+	// Return complete URL including base URL from config
+	return fmt.Sprintf("%s/uploads/videos/%s", ms.config.BaseURL, filename), nil
 }
 
 func (ms *ModuleService) generateCertificate(userID, courseID string) (string, error) {

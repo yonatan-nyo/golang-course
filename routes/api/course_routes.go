@@ -1,25 +1,40 @@
 package api
 
 import (
-	"yonatan/labpro/controllers"
+	apiAdminCourse "yonatan/labpro/controllers/api/admin"
+	apiUserCourse "yonatan/labpro/controllers/api/user"
 	"yonatan/labpro/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupCourseRoutes(api *gin.RouterGroup, courseController *controllers.CourseController) {
+func SetupCourseRoutes(api *gin.RouterGroup,
+	adminCourseController *apiAdminCourse.CourseAPIController,
+	userCourseController *apiUserCourse.CourseAPIController) {
+
+	// User course routes
 	courses := api.Group("/courses")
 	courses.Use(middleware.AuthMiddleware())
 	{
-		// List and create courses
-		courses.GET("", courseController.GetCourses)
-		courses.POST("", courseController.CreateCourse)
-		courses.GET("/my-courses", courseController.GetMyCourses)
+		// GET /api/courses
+		courses.GET("", userCourseController.GetCourses)
+		// GET /api/courses/:courseId
+		courses.GET("/:courseId", userCourseController.GetCourseByID)
+		// POST /api/courses/:courseId/buy
+		courses.POST("/:courseId/buy", userCourseController.PurchaseCourse)
+		// GET /api/courses/my-courses
+		courses.GET("/my-courses", userCourseController.GetMyCourses)
+	}
 
-		// Course-specific operations with ID parameter
-		courses.GET("/:id", courseController.GetCourse)
-		courses.POST("/:id/buy", courseController.BuyCourse)
-		courses.PUT("/:id", courseController.UpdateCourse)
-		courses.DELETE("/:id", courseController.DeleteCourse)
+	// Admin course routes
+	adminCourses := api.Group("/courses")
+	adminCourses.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
+	{
+		// POST /api/courses (admin only)
+		adminCourses.POST("", adminCourseController.CreateCourse)
+		// PUT /api/courses/:courseId (admin only)
+		adminCourses.PUT("/:courseId", adminCourseController.UpdateCourse)
+		// DELETE /api/courses/:courseId (admin only)
+		adminCourses.DELETE("/:courseId", adminCourseController.DeleteCourse)
 	}
 }

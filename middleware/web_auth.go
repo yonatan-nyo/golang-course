@@ -64,6 +64,7 @@ func WebAuthMiddleware() gin.HandlerFunc {
 // OptionalWebAuthMiddleware checks for authentication but doesn't redirect if not authenticated
 func OptionalWebAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		cfg := config.Load()
 
 		// Get token from cookie

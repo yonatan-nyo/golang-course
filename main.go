@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// Setup router
-	r := router.SetupRouter()
+	r := router.SetupRouter(cfg)
 
 	// Start server
 	log.Printf("Server starting on port %s", cfg.Port)

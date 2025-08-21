@@ -1,18 +1,24 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/lib/pq"
+	"gorm.io/gorm"
+)
 
 type Course struct {
-	ID             string    `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Title          string    `json:"title" gorm:"not null"`
-	Description    string    `json:"description" gorm:"not null"`
-	Instructor     string    `json:"instructor" gorm:"not null"`
-	Topics         []string  `json:"topics" gorm:"type:text[]"`
-	Price          float64   `json:"price" gorm:"not null"`
-	ThumbnailImage *string   `json:"thumbnail_image"`
-	TotalModules   int       `json:"total_modules" gorm:"default:0"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID          string         `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Title       string         `json:"title" gorm:"not null"`
+	Description string         `json:"description"`
+	Instructor  string         `json:"instructor" gorm:"not null"`
+	Price       float64        `json:"price" gorm:"not null"`
+	Thumbnail   string         `json:"thumbnail"`
+	Topics      pq.StringArray `json:"topics" gorm:"type:text[]"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
-	Modules []Module `json:"modules,omitempty" gorm:"foreignKey:CourseID"`
+	// Relationships
+	Modules []Module `json:"modules" gorm:"foreignKey:CourseID"`
 }

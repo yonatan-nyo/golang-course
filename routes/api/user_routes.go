@@ -1,21 +1,28 @@
 package api
 
 import (
-	"yonatan/labpro/controllers"
+	apiAdminUser "yonatan/labpro/controllers/api/admin"
 	"yonatan/labpro/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupUserRoutes(api *gin.RouterGroup, userController *controllers.UserController) {
-	// User routes (admin only)
+func SetupUserRoutes(api *gin.RouterGroup,
+	adminUserController *apiAdminUser.UserAPIController) {
+
+	// All user routes are admin-only according to the contract
 	users := api.Group("/users")
-	users.Use(middleware.AuthMiddleware())
+	users.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
 	{
-		users.GET("", userController.GetUsers)
-		users.GET("/:id", userController.GetUser)
-		users.POST("/:id/balance", userController.UpdateUserBalance)
-		users.PUT("/:id", userController.UpdateUser)
-		users.DELETE("/:id", userController.DeleteUser)
+		// GET /api/users
+		users.GET("", adminUserController.GetUsers)
+		// GET /api/users/:id
+		users.GET("/:id", adminUserController.GetUserByID)
+		// POST /api/users/:id/balance
+		users.POST("/:id/balance", adminUserController.UpdateUserBalance)
+		// PUT /api/users/:id
+		users.PUT("/:id", adminUserController.UpdateUser)
+		// DELETE /api/users/:id
+		users.DELETE("/:id", adminUserController.DeleteUser)
 	}
 }

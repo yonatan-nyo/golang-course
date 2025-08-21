@@ -211,10 +211,116 @@ func (uc *UserController) ShowUserDetails(c *gin.Context) {
 	// TODO: Add GetUserEnrolledCourses method to UserService if needed
 	enrolledCourses := []models.Course{}
 
+	// Get success and error messages from query parameters
+	successMsg := c.Query("success")
+	errorMsg := c.Query("error")
+
 	c.HTML(http.StatusOK, "user-details.html", gin.H{
 		"Title":           "User Details",
 		"User":            userModel,
 		"TargetUser":      targetUser,
 		"EnrolledCourses": enrolledCourses,
+		"Success":         successMsg,
+		"Error":           errorMsg,
 	})
+}
+
+func (uc *UserController) ShowCreateUserPage(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	userModel := user.(models.User)
+	if !userModel.IsAdmin {
+		c.Redirect(http.StatusFound, "/dashboard")
+		return
+	}
+
+	c.HTML(http.StatusOK, "user-create.html", gin.H{
+		"Title": "Create User",
+		"User":  userModel,
+	})
+}
+
+func (uc *UserController) CreateUser(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	userModel := user.(models.User)
+	if !userModel.IsAdmin {
+		c.Redirect(http.StatusFound, "/dashboard")
+		return
+	}
+
+	// Get form data
+	firstName := c.PostForm("first_name")
+	lastName := c.PostForm("last_name")
+	username := c.PostForm("username")
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+	isAdminStr := c.PostForm("is_admin")
+
+	isAdmin := isAdminStr == "true"
+
+	// Validate required fields
+	if firstName == "" || lastName == "" || username == "" || email == "" || password == "" {
+		c.HTML(http.StatusBadRequest, "user-create.html", gin.H{
+			"Title": "Create User",
+			"User":  userModel,
+			"Error": "All fields are required",
+		})
+		return
+	}
+
+	// Create user
+	newUser, err := uc.userService.CreateUser(firstName, lastName, username, email, password, isAdmin)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "user-create.html", gin.H{
+			"Title": "Create User",
+			"User":  userModel,
+			"Error": err.Error(),
+		})
+		return
+	}
+
+	// Redirect to user details page
+	c.Redirect(http.StatusFound, "/admin/users/"+newUser.ID)
+}
+
+func (uc *UserController) HandleUpdateBalance(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	userModel := user.(models.User)
+	if !userModel.IsAdmin {
+		c.Redirect(http.StatusFound, "/dashboard")
+		return
+	}
+
+	userID := c.Param("id")
+	amountStr := c.PostForm("amount")
+
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/admin/users/"+userID+"?error=Invalid amount format")
+		return
+	}
+
+	// Update the user's balance
+	_, err = uc.userService.UpdateUserBalance(userID, amount)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/admin/users/"+userID+"?error=Failed to update balance")
+		return
+	}
+
+	// Redirect back to user details with success message
+	c.Redirect(http.StatusFound, "/admin/users/"+userID+"?success=Balance updated successfully")
 }

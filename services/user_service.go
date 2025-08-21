@@ -53,10 +53,25 @@ func (us *UserService) GetUsers(query string, page, limit int) ([]map[string]int
 	}
 
 	totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+	// Calculate pagination values
+	prevPage := page - 1
+	nextPage := page + 1
+
+	if prevPage < 1 {
+		prevPage = 1
+	}
+	if nextPage > totalPages {
+		nextPage = totalPages
+	}
+
 	pagination := map[string]interface{}{
 		"current_page": page,
 		"total_pages":  totalPages,
 		"total_items":  total,
+		"prev_page":    prevPage,
+		"next_page":    nextPage,
+		"page":         page, // For compatibility
 	}
 
 	return result, pagination, nil
@@ -171,4 +186,36 @@ func (us *UserService) DeleteUser(id string) error {
 
 	tx.Commit()
 	return nil
+}
+
+func (us *UserService) CreateUser(firstName, lastName, username, email, password string, isAdmin bool) (*models.User, error) {
+	// Check if user already exists
+	var existingUser models.User
+	if err := us.db.Where("username = ? OR email = ?", username, email).First(&existingUser).Error; err == nil {
+		return nil, errors.New("user with this username or email already exists")
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create user
+	user := models.User{
+		FirstName: firstName,
+		LastName:  lastName,
+		Username:  username,
+		Email:     email,
+		Password:  string(hashedPassword),
+		IsAdmin:   isAdmin,
+	}
+
+	if err := us.db.Create(&user).Error; err != nil {
+		return nil, err
+	}
+
+	// Remove password from response
+	user.Password = ""
+	return &user, nil
 }

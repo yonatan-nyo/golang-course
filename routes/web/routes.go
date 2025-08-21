@@ -76,8 +76,12 @@ func SetupWebRoutes(r *gin.Engine,
 
 			// User management routes
 			adminRoutes.GET("/users", adminUserController.ShowUsersPage)
+			adminRoutes.GET("/users/create", adminUserController.ShowCreateUserPage)
+			adminRoutes.POST("/users/create", adminUserController.CreateUser)
+			adminRoutes.GET("/users/:id", adminUserController.ShowUserDetails)
 			adminRoutes.GET("/users/:id/edit", adminUserController.ShowEditUserPage)
 			adminRoutes.POST("/users/:id/edit", adminUserController.HandleUpdateUser)
+			adminRoutes.POST("/users/:id/balance", adminUserController.HandleUpdateBalance)
 			adminRoutes.DELETE("/users/:id", adminUserController.HandleDeleteUser)
 
 			// Module management routes

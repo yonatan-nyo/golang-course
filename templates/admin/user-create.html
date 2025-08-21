@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}} - Grocademy Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#16a34a", // green-600
+              secondary: "#15803d", // green-700
+              accent: "#22c55e", // green-500
+              dark: "#064e3b", // green-900
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-green-50 min-h-screen">
+    <div class="h-screen flex overflow-hidden bg-green-50">
+      <!-- Sidebar -->
+      <div class="flex flex-col w-64 bg-dark">
+        <div class="flex flex-col h-0 flex-1 overflow-y-auto">
+          <div class="flex items-center h-16 flex-shrink-0 px-4 bg-dark">
+            <div class="flex items-center">
+              <div class="h-8 w-8 bg-accent rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                </svg>
+              </div>
+              <h1 class="ml-3 text-white text-lg font-bold">Grocademy</h1>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex-1 flex flex-col overflow-y-auto">
+            <nav class="flex-1 px-2 py-4 space-y-1">
+              <!-- Dashboard -->
+              <a href="/admin" class="text-gray-300 hover:bg-primary hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                </svg>
+                Dashboard
+              </a>
+
+              <!-- Course Management -->
+              <a href="/admin/courses" class="text-gray-300 hover:bg-primary hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                Courses
+              </a>
+
+              <!-- User Management -->
+              <a href="/admin/users" class="bg-primary text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                Users
+              </a>
+
+              <!-- Module Management -->
+              <a href="/admin/modules" class="text-gray-300 hover:bg-primary hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Modules
+              </a>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content area -->
+      <div class="flex flex-col w-0 flex-1 overflow-hidden">
+        <!-- Top navigation -->
+        <div class="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
+          <div class="flex-1 px-4 flex justify-between">
+            <div class="flex-1 flex">
+              <!-- Left side content if needed -->
+            </div>
+            <div class="ml-4 flex items-center md:ml-6">
+              <!-- User menu -->
+              <div class="ml-3 relative">
+                <div class="flex items-center space-x-4">
+                  <span class="text-gray-700 text-sm">Welcome, {{.User.FirstName}}</span>
+                  <form action="/auth/logout" method="POST" class="inline">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                      Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none">
+          <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              <!-- Page header -->
+              <div class="md:flex md:items-center md:justify-between mb-6">
+                <div class="flex-1 min-w-0">
+                  <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                    Create New User
+                  </h2>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Add a new user to the system with their details and permissions.
+                  </p>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4">
+                  <a href="/admin/users" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md text-sm font-medium">
+                    Back to Users
+                  </a>
+                </div>
+              </div>
+
+              <!-- Error message -->
+              {{if .Error}}
+              <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{.Error}}
+              </div>
+              {{end}}
+
+              <!-- Create user form -->
+              <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <form action="/admin/users/create" method="POST" enctype="multipart/form-data" class="space-y-6 p-6">
+                  <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                    <!-- First Name -->
+                    <div>
+                      <label for="first_name" class="block text-sm font-medium text-gray-700">
+                        First Name *
+                      </label>
+                      <div class="mt-1">
+                        <input
+                          type="text"
+                          name="first_name"
+                          id="first_name"
+                          required
+                          class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                      <label for="last_name" class="block text-sm font-medium text-gray-700">
+                        Last Name *
+                      </label>
+                      <div class="mt-1">
+                        <input
+                          type="text"
+                          name="last_name"
+                          id="last_name"
+                          required
+                          class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                      <label for="username" class="block text-sm font-medium text-gray-700">
+                        Username *
+                      </label>
+                      <div class="mt-1">
+                        <input
+                          type="text"
+                          name="username"
+                          id="username"
+                          required
+                          class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                          placeholder="Enter username"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                      <label for="email" class="block text-sm font-medium text-gray-700">
+                        Email *
+                      </label>
+                      <div class="mt-1">
+                        <input
+                          type="email"
+                          name="email"
+                          id="email"
+                          required
+                          class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="sm:col-span-2">
+                      <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password *
+                      </label>
+                      <div class="mt-1">
+                        <input
+                          type="password"
+                          name="password"
+                          id="password"
+                          required
+                          minlength="6"
+                          class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                          placeholder="Enter password (minimum 6 characters)"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Admin Status -->
+                    <div class="sm:col-span-2">
+                      <div class="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="is_admin"
+                          id="is_admin"
+                          value="true"
+                          class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        />
+                        <label for="is_admin" class="ml-2 block text-sm text-gray-900">
+                          Grant admin privileges
+                        </label>
+                      </div>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Admin users can manage courses, modules, and other users.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Form actions -->
+                  <div class="pt-5">
+                    <div class="flex justify-end space-x-3">
+                      <a href="/admin/users" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Cancel
+                      </a>
+                      <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Create User
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

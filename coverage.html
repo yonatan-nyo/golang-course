@@ -1,0 +1,3048 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>config: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">yonatan/labpro/config/config.go (70.0%)</option>
+				
+				<option value="file1">yonatan/labpro/config/path_utils.go (82.4%)</option>
+				
+				<option value="file2">yonatan/labpro/controllers/api/admin/course_controller.go (67.4%)</option>
+				
+				<option value="file3">yonatan/labpro/controllers/api/admin/module_controller.go (70.6%)</option>
+				
+				<option value="file4">yonatan/labpro/controllers/api/admin/user_controller.go (69.3%)</option>
+				
+				<option value="file5">yonatan/labpro/controllers/api/auth_controller.go (93.8%)</option>
+				
+				<option value="file6">yonatan/labpro/controllers/api/user/course_controller.go (73.6%)</option>
+				
+				<option value="file7">yonatan/labpro/controllers/api/user/module_controller.go (78.0%)</option>
+				
+				<option value="file8">yonatan/labpro/database/database.go (0.0%)</option>
+				
+				<option value="file9">yonatan/labpro/middleware/admin_auth.go (0.0%)</option>
+				
+				<option value="file10">yonatan/labpro/middleware/auth.go (76.0%)</option>
+				
+				<option value="file11">yonatan/labpro/middleware/web_auth.go (0.0%)</option>
+				
+				<option value="file12">yonatan/labpro/models/user.go (85.7%)</option>
+				
+				<option value="file13">yonatan/labpro/models/user_course.go (100.0%)</option>
+				
+				<option value="file14">yonatan/labpro/routes/api/auth_routes.go (100.0%)</option>
+				
+				<option value="file15">yonatan/labpro/routes/api/course_routes.go (100.0%)</option>
+				
+				<option value="file16">yonatan/labpro/routes/api/module_routes.go (100.0%)</option>
+				
+				<option value="file17">yonatan/labpro/routes/api/routes.go (0.0%)</option>
+				
+				<option value="file18">yonatan/labpro/routes/api/user_routes.go (100.0%)</option>
+				
+				<option value="file19">yonatan/labpro/services/auth_service.go (87.5%)</option>
+				
+				<option value="file20">yonatan/labpro/services/course_service.go (71.3%)</option>
+				
+				<option value="file21">yonatan/labpro/services/module_service.go (75.5%)</option>
+				
+				<option value="file22">yonatan/labpro/services/user_service.go (69.4%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package config
+
+import (
+        "log"
+        "os"
+
+        "github.com/joho/godotenv"
+)
+
+type Config struct {
+        DatabaseURL string
+        JWTSecret   string
+        Port        string
+        Environment string
+        BaseURL     string
+        UploadPath  string
+        MaxFileSize string
+}
+
+func Load(envFiles ...string) *Config <span class="cov8" title="1">{
+        // Determine which env file to load
+        envFile := ".env" // default
+        if len(envFiles) &gt; 0 &amp;&amp; envFiles[0] != "" </span><span class="cov8" title="1">{
+                envFile = envFiles[0]
+        }</span>
+
+        // Load specified env file
+        <span class="cov8" title="1">if err := godotenv.Load(envFile); err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: %s file not found or could not be loaded: %v", envFile, err)
+        }</span>
+
+        <span class="cov8" title="1">return &amp;Config{
+                DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost/labpro_db?sslmode=disable"),
+                JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
+                Port:        getEnv("PORT", "8080"),
+                Environment: getEnv("ENVIRONMENT", "development"),
+                BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
+                UploadPath:  getEnv("UPLOAD_PATH", "./uploads"),
+                MaxFileSize: getEnv("MAX_FILE_SIZE", "10485760"),
+        }</span>
+}
+
+// LoadTest loads configuration specifically for testing using .env.test
+func LoadTest() *Config <span class="cov0" title="0">{
+        return Load(".env.test")
+}</span>
+
+func getEnv(key, defaultValue string) string <span class="cov8" title="1">{
+        if value := os.Getenv(key); value != "" </span><span class="cov8" title="1">{
+                return value
+        }</span>
+        <span class="cov0" title="0">return defaultValue</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package config
+
+import (
+        "os"
+        "path/filepath"
+)
+
+// getProjectRoot finds the project root by looking for go.mod file
+func getProjectRoot() string <span class="cov8" title="1">{
+        dir, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        // Walk up the directory tree to find go.mod
+        <span class="cov8" title="1">for </span><span class="cov8" title="1">{
+                if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil </span><span class="cov8" title="1">{
+                        return dir
+                }</span>
+
+                <span class="cov8" title="1">parent := filepath.Dir(dir)
+                if parent == dir </span><span class="cov0" title="0">{
+                        break</span> // reached filesystem root
+                }
+                <span class="cov8" title="1">dir = parent</span>
+        }
+
+        <span class="cov0" title="0">return ""</span>
+}
+
+// LoadWithProjectRoot loads config ensuring we're in the project root directory
+func LoadWithProjectRoot(envFiles ...string) *Config <span class="cov8" title="1">{
+        // Save current directory
+        originalDir, _ := os.Getwd()
+
+        // Change to project root if we can find it
+        if projectRoot := getProjectRoot(); projectRoot != "" </span><span class="cov8" title="1">{
+                os.Chdir(projectRoot)
+                defer os.Chdir(originalDir) // Restore original directory
+        }</span>
+
+        <span class="cov8" title="1">return Load(envFiles...)</span>
+}
+
+// LoadTestWithProjectRoot loads test config ensuring we're in the project root directory
+func LoadTestWithProjectRoot() *Config <span class="cov8" title="1">{
+        return LoadWithProjectRoot(".env.test")
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package admin
+
+import (
+        "net/http"
+        "strconv"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type CourseAPIController struct {
+        courseService *services.CourseService
+}
+
+func NewCourseAPIController(courseService *services.CourseService) *CourseAPIController <span class="cov8" title="1">{
+        return &amp;CourseAPIController{
+                courseService: courseService,
+        }
+}</span>
+
+func (cac *CourseAPIController) CreateCourse(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        // Handle form data for multipart/form-data
+        <span class="cov8" title="1">title := c.PostForm("title")
+        description := c.PostForm("description")
+        instructor := c.PostForm("instructor")
+        priceStr := c.PostForm("price")
+        topics := c.PostFormArray("topics")
+
+        if title == "" || instructor == "" || priceStr == "" </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Title, instructor, and price are required",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">price, err := strconv.ParseFloat(priceStr, 64)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Invalid price format",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Handle thumbnail upload
+        <span class="cov8" title="1">thumbnailURL := ""
+        if file, header, err := c.Request.FormFile("thumbnail_image"); err == nil &amp;&amp; header != nil </span><span class="cov0" title="0">{
+                defer file.Close()
+                thumbnailURL, err = cac.courseService.SaveThumbnail(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save thumbnail: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+        }
+
+        // Create course
+        <span class="cov8" title="1">course := &amp;models.Course{
+                Title:       title,
+                Description: description,
+                Instructor:  instructor,
+                Price:       price,
+                Thumbnail:   thumbnailURL,
+                Topics:      topics,
+        }
+
+        createdCourse, err := cac.courseService.CreateCourse(course)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to create course",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusCreated, gin.H{
+                "status":  "success",
+                "message": "Course created successfully",
+                "data":    createdCourse,
+        })</span>
+}
+
+func (cac *CourseAPIController) UpdateCourse(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">courseID := c.Param("courseId")
+
+        // Get existing course to preserve thumbnail if no new one is provided
+        existingCourse, err := cac.courseService.GetCourseByID(courseID, userModel.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{
+                        "status":  "error",
+                        "message": "Course not found",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Handle form data for multipart/form-data
+        <span class="cov8" title="1">title := c.PostForm("title")
+        description := c.PostForm("description")
+        instructor := c.PostForm("instructor")
+        priceStr := c.PostForm("price")
+        topics := c.PostFormArray("topics")
+
+        if title == "" || instructor == "" || priceStr == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Title, instructor, and price are required",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">price, err := strconv.ParseFloat(priceStr, 64)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Invalid price format",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Create course object for update, preserving existing thumbnail
+        <span class="cov8" title="1">existingThumbnail := ""
+        if thumbnail, ok := existingCourse["thumbnail_image"].(string); ok </span><span class="cov8" title="1">{
+                existingThumbnail = thumbnail
+        }</span>
+
+        <span class="cov8" title="1">course := &amp;models.Course{
+                ID:          courseID,
+                Title:       title,
+                Description: description,
+                Instructor:  instructor,
+                Price:       price,
+                Topics:      topics,
+                Thumbnail:   existingThumbnail, // Preserve existing thumbnail
+        }
+
+        // Handle thumbnail upload if provided - this will override the preserved thumbnail
+        if file, header, err := c.Request.FormFile("thumbnail_image"); err == nil &amp;&amp; header != nil </span><span class="cov0" title="0">{
+                defer file.Close()
+                thumbnailURL, err := cac.courseService.SaveThumbnail(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save thumbnail: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+                <span class="cov0" title="0">course.Thumbnail = thumbnailURL</span>
+        }
+
+        <span class="cov8" title="1">updatedCourse, err := cac.courseService.UpdateCourse(course)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to update course",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Course updated successfully",
+                "data":    updatedCourse,
+        })</span>
+}
+
+func (cac *CourseAPIController) DeleteCourse(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">courseID := c.Param("courseId")
+        err := cac.courseService.DeleteCourse(courseID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to delete course",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.Status(http.StatusNoContent)</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package admin
+
+import (
+        "net/http"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type ModuleAPIController struct {
+        moduleService *services.ModuleService
+}
+
+func NewModuleAPIController(moduleService *services.ModuleService) *ModuleAPIController <span class="cov8" title="1">{
+        return &amp;ModuleAPIController{
+                moduleService: moduleService,
+        }
+}</span>
+
+func (mac *ModuleAPIController) CreateModule(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">courseID := c.Param("courseId")
+
+        // Handle form data for multipart/form-data
+        title := c.PostForm("title")
+        description := c.PostForm("description")
+
+        if title == "" </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Title is required",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Handle file uploads
+        <span class="cov8" title="1">var pdfURL, videoURL *string
+
+        // Handle PDF file
+        if file, header, err := c.Request.FormFile("pdf_content"); err == nil &amp;&amp; header != nil </span><span class="cov8" title="1">{
+                defer file.Close()
+                pdfContent, err := mac.moduleService.SavePDF(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save PDF: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+                <span class="cov8" title="1">pdfURL = &amp;pdfContent</span>
+        }
+
+        // Handle Video file
+        <span class="cov8" title="1">if file, header, err := c.Request.FormFile("video_content"); err == nil &amp;&amp; header != nil </span><span class="cov8" title="1">{
+                defer file.Close()
+                videoContent, err := mac.moduleService.SaveVideo(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save video: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+                <span class="cov8" title="1">videoURL = &amp;videoContent</span>
+        }
+
+        // Create module
+        <span class="cov8" title="1">createdModule, err := mac.moduleService.CreateModule(courseID, title, description, pdfURL, videoURL)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to create module",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusCreated, gin.H{
+                "status":  "success",
+                "message": "Module created successfully",
+                "data":    createdModule,
+        })</span>
+}
+
+func (mac *ModuleAPIController) UpdateModule(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">moduleID := c.Param("id")
+
+        // Get existing module to preserve files if no new ones are provided
+        existingModule, err := mac.moduleService.GetModuleByID(moduleID, userModel.ID, "admin")
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{
+                        "status":  "error",
+                        "message": "Module not found",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Handle form data for multipart/form-data
+        <span class="cov8" title="1">title := c.PostForm("title")
+        description := c.PostForm("description")
+
+        if title == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Title is required",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Handle file uploads, preserving existing files if no new ones are provided
+        <span class="cov8" title="1">var pdfURL, videoURL *string
+
+        // Preserve existing PDF if available
+        if existingPDF, ok := existingModule["pdf_content"].(string); ok &amp;&amp; existingPDF != "" </span><span class="cov0" title="0">{
+                pdfURL = &amp;existingPDF
+        }</span>
+
+        // Preserve existing video if available
+        <span class="cov8" title="1">if existingVideo, ok := existingModule["video_content"].(string); ok &amp;&amp; existingVideo != "" </span><span class="cov0" title="0">{
+                videoURL = &amp;existingVideo
+        }</span>
+
+        // Handle PDF file upload (this will override the preserved PDF)
+        <span class="cov8" title="1">if file, header, err := c.Request.FormFile("pdf_content"); err == nil &amp;&amp; header != nil </span><span class="cov8" title="1">{
+                defer file.Close()
+                pdfContent, err := mac.moduleService.SavePDF(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save PDF: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+                <span class="cov8" title="1">pdfURL = &amp;pdfContent</span>
+        }
+
+        // Handle Video file upload (this will override the preserved video)
+        <span class="cov8" title="1">if file, header, err := c.Request.FormFile("video_content"); err == nil &amp;&amp; header != nil </span><span class="cov8" title="1">{
+                defer file.Close()
+                videoContent, err := mac.moduleService.SaveVideo(header)
+                if err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusInternalServerError, gin.H{
+                                "status":  "error",
+                                "message": "Failed to save video: " + err.Error(),
+                                "data":    nil,
+                        })
+                        return
+                }</span>
+                <span class="cov8" title="1">videoURL = &amp;videoContent</span>
+        }
+
+        // Update module
+        <span class="cov8" title="1">updatedModule, err := mac.moduleService.UpdateModule(moduleID, title, description, pdfURL, videoURL)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to update module",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Module updated successfully",
+                "data":    updatedModule,
+        })</span>
+}
+
+func (mac *ModuleAPIController) DeleteModule(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">moduleID := c.Param("id")
+        err := mac.moduleService.DeleteModule(moduleID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to delete module",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.Status(http.StatusNoContent)</span>
+}
+
+func (mac *ModuleAPIController) ReorderModules(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">courseID := c.Param("courseId")
+
+        var req struct {
+                ModuleOrder []struct {
+                        ID    string `json:"id" binding:"required"`
+                        Order int    `json:"order" binding:"required"`
+                } `json:"module_order" binding:"required"`
+        }
+
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Reorder modules
+        <span class="cov8" title="1">result, err := mac.moduleService.ReorderModules(courseID, req.ModuleOrder)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to reorder modules",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Modules reordered successfully",
+                "data":    result,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package admin
+
+import (
+        "net/http"
+        "strconv"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type UserAPIController struct {
+        userService *services.UserService
+}
+
+func NewUserAPIController(userService *services.UserService) *UserAPIController <span class="cov8" title="1">{
+        return &amp;UserAPIController{
+                userService: userService,
+        }
+}</span>
+
+func (uac *UserAPIController) GetUsers(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        // Get query parameters
+        <span class="cov8" title="1">query := c.Query("q")
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "15"))
+        if limit &gt; 50 </span><span class="cov0" title="0">{
+                limit = 50
+        }</span>
+
+        // Get users from service
+        <span class="cov8" title="1">users, pagination, err := uac.userService.GetUsers(query, page, limit)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to fetch users",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":     "success",
+                "message":    "Users retrieved successfully",
+                "data":       users,
+                "pagination": pagination,
+        })</span>
+}
+
+func (uac *UserAPIController) GetUserByID(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userID := c.Param("id")
+        targetUser, err := uac.userService.GetUserByID(userID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{
+                        "status":  "error",
+                        "message": "User not found",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "User retrieved successfully",
+                "data":    targetUser,
+        })</span>
+}
+
+func (uac *UserAPIController) UpdateUserBalance(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userID := c.Param("id")
+
+        var req struct {
+                Increment float64 `json:"increment" binding:"required"`
+        }
+
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Update user balance
+        <span class="cov8" title="1">updatedUser, err := uac.userService.UpdateUserBalance(userID, req.Increment)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to update user balance",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "id":       updatedUser.ID,
+                "username": updatedUser.Username,
+                "balance":  updatedUser.Balance,
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "User balance updated successfully",
+                "data":    result,
+        })</span>
+}
+
+func (uac *UserAPIController) UpdateUser(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userID := c.Param("id")
+
+        var req struct {
+                Email     string `json:"email" binding:"required,email"`
+                Username  string `json:"username" binding:"required"`
+                FirstName string `json:"first_name" binding:"required"`
+                LastName  string `json:"last_name" binding:"required"`
+                Password  string `json:"password,omitempty"`
+        }
+
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        // Update user
+        <span class="cov8" title="1">updatedUser, err := uac.userService.UpdateUser(userID, req.Email, req.Username, req.FirstName, req.LastName, req.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to update user: " + err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "id":         updatedUser.ID,
+                "username":   updatedUser.Username,
+                "first_name": updatedUser.FirstName,
+                "last_name":  updatedUser.LastName,
+                "balance":    updatedUser.Balance,
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "User updated successfully",
+                "data":    result,
+        })</span>
+}
+
+func (uac *UserAPIController) DeleteUser(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        if !userModel.IsAdmin </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userID := c.Param("id")
+
+        // Prevent admin from deleting themselves
+        if userID == userModel.ID </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Cannot delete your own account",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">err := uac.userService.DeleteUser(userID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to delete user",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.Status(http.StatusNoContent)</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package api
+
+import (
+        "net/http"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type AuthAPIController struct {
+        authService *services.AuthService
+}
+
+func NewAuthAPIController(authService *services.AuthService) *AuthAPIController <span class="cov8" title="1">{
+        return &amp;AuthAPIController{
+                authService: authService,
+        }
+}</span>
+
+func (aac *AuthAPIController) Login(c *gin.Context) <span class="cov8" title="1">{
+        var req struct {
+                Identifier string `json:"identifier" binding:"required"`
+                Password   string `json:"password" binding:"required"`
+        }
+
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">token, user, err := aac.authService.Login(req.Identifier, req.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusUnauthorized, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "username": user.Username,
+                "token":    token,
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Login successful",
+                "data":    result,
+        })</span>
+}
+
+func (aac *AuthAPIController) Register(c *gin.Context) <span class="cov8" title="1">{
+        var req struct {
+                Username        string `json:"username" binding:"required"`
+                Email           string `json:"email" binding:"required,email"`
+                FirstName       string `json:"first_name" binding:"required"`
+                LastName        string `json:"last_name" binding:"required"`
+                Password        string `json:"password" binding:"required,min=8"`
+                ConfirmPassword string `json:"confirm_password" binding:"required"`
+        }
+
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">if req.Password != req.ConfirmPassword </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": "Password and confirm password do not match",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">user, err := aac.authService.Register(req.FirstName, req.LastName, req.Username, req.Email, req.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "id":         user.ID,
+                "username":   user.Username,
+                "first_name": user.FirstName,
+                "last_name":  user.LastName,
+        }
+
+        c.JSON(http.StatusCreated, gin.H{
+                "status":  "success",
+                "message": "Registration successful",
+                "data":    result,
+        })</span>
+}
+
+func (aac *AuthAPIController) Logout(c *gin.Context) <span class="cov8" title="1">{
+        c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Logout successful",
+                "data":    nil,
+        })
+}</span>
+
+func (aac *AuthAPIController) GetProfile(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{
+                        "status":  "error",
+                        "message": "Unauthorized",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        result := map[string]interface{}{
+                "id":         userModel.ID,
+                "username":   userModel.Username,
+                "email":      userModel.Email,
+                "first_name": userModel.FirstName,
+                "last_name":  userModel.LastName,
+                "balance":    userModel.Balance,
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Profile retrieved successfully",
+                "data":    result,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package user
+
+import (
+        "net/http"
+        "strconv"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type CourseAPIController struct {
+        courseService *services.CourseService
+}
+
+func NewCourseAPIController(courseService *services.CourseService) *CourseAPIController <span class="cov8" title="1">{
+        return &amp;CourseAPIController{
+                courseService: courseService,
+        }
+}</span>
+
+func (cac *CourseAPIController) GetCourses(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+
+        // Get query parameters
+        query := c.Query("q")
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "15"))
+        if limit &gt; 50 </span><span class="cov0" title="0">{
+                limit = 50
+        }</span>
+
+        // Get available courses
+        <span class="cov8" title="1">courses, pagination, err := cac.courseService.GetCourses(query, page, limit, userModel.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to fetch courses",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":     "success",
+                "message":    "Courses retrieved successfully",
+                "data":       courses,
+                "pagination": pagination,
+        })</span>
+}
+
+func (cac *CourseAPIController) GetCourseByID(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        courseID := c.Param("courseId")
+
+        // Get course details
+        course, err := cac.courseService.GetCourseByID(courseID, userModel.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{
+                        "status":  "error",
+                        "message": "Course not found",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Course retrieved successfully",
+                "data":    course,
+        })</span>
+}
+
+func (cac *CourseAPIController) GetMyCourses(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+
+        // Get query parameters
+        query := c.Query("q")
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "15"))
+        if limit &gt; 50 </span><span class="cov0" title="0">{
+                limit = 50
+        }</span>
+
+        // Get user's enrolled courses
+        <span class="cov8" title="1">enrolledCourses, pagination, err := cac.courseService.GetMyCourses(userModel.ID, query, page, limit)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to fetch enrolled courses",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":     "success",
+                "message":    "My courses retrieved successfully",
+                "data":       enrolledCourses,
+                "pagination": pagination,
+        })</span>
+}
+
+func (cac *CourseAPIController) PurchaseCourse(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        courseID := c.Param("courseId")
+
+        // Purchase course
+        result, err := cac.courseService.BuyCourse(courseID, userModel.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Course purchased successfully",
+                "data":    result,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package user
+
+import (
+        "net/http"
+        "strconv"
+        "yonatan/labpro/models"
+        "yonatan/labpro/services"
+
+        "github.com/gin-gonic/gin"
+)
+
+type ModuleAPIController struct {
+        moduleService *services.ModuleService
+}
+
+func NewModuleAPIController(moduleService *services.ModuleService) *ModuleAPIController <span class="cov8" title="1">{
+        return &amp;ModuleAPIController{
+                moduleService: moduleService,
+        }
+}</span>
+
+func (mac *ModuleAPIController) GetCourseModules(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        courseID := c.Param("courseId")
+
+        // Get query parameters
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "15"))
+        if limit &gt; 50 </span><span class="cov0" title="0">{
+                limit = 50
+        }</span>
+
+        // Get course modules
+        <span class="cov8" title="1">modules, pagination, err := mac.moduleService.GetModules(courseID, userModel.ID, page, limit)
+        if err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusInternalServerError, gin.H{
+                        "status":  "error",
+                        "message": "Failed to fetch modules",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":     "success",
+                "message":    "Modules retrieved successfully",
+                "data":       modules,
+                "pagination": pagination,
+        })</span>
+}
+
+func (mac *ModuleAPIController) GetModuleByID(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        moduleID := c.Param("id")
+
+        // Determine user role
+        userRole := "user"
+        if userModel.IsAdmin </span><span class="cov8" title="1">{
+                userRole = "admin"
+        }</span>
+
+        // Get module details
+        <span class="cov8" title="1">module, err := mac.moduleService.GetModuleByID(moduleID, userModel.ID, userRole)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusNotFound, gin.H{
+                        "status":  "error",
+                        "message": "Module not found or access denied",
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Module retrieved successfully",
+                "data":    module,
+        })</span>
+}
+
+func (mac *ModuleAPIController) CompleteModule(c *gin.Context) <span class="cov8" title="1">{
+        user, exists := c.Get("user")
+        if !exists </span><span class="cov0" title="0">{
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">userModel := user.(models.User)
+        moduleID := c.Param("id")
+
+        // Mark module as completed
+        result, err := mac.moduleService.CompleteModule(moduleID, userModel.ID)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{
+                        "status":  "error",
+                        "message": err.Error(),
+                        "data":    nil,
+                })
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "status":  "success",
+                "message": "Module completed successfully",
+                "data":    result,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package database
+
+import (
+        "log"
+        "yonatan/labpro/models"
+
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func Init(databaseURL string) <span class="cov0" title="0">{
+        var err error
+        DB, err = gorm.Open(postgres.Open(databaseURL), &amp;gorm.Config{})
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to connect to database:", err)
+        }</span>
+
+        // Auto migrate the schema
+        <span class="cov0" title="0">err = DB.AutoMigrate(
+                &amp;models.User{},
+                &amp;models.Course{},
+                &amp;models.Module{},
+                &amp;models.UserCourse{},
+                &amp;models.UserModuleProgress{},
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to migrate database:", err)
+        }</span>
+
+        // Create admin user if not exists
+        <span class="cov0" title="0">createAdminUser()</span>
+}
+
+func createAdminUser() <span class="cov0" title="0">{
+        var admin models.User
+        result := DB.Where("username = ?", "admin").First(&amp;admin)
+        if result.Error == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                admin = models.User{
+                        Username:  "admin",
+                        Email:     "admin@labpro.com",
+                        FirstName: "Admin",
+                        LastName:  "User",
+                        Balance:   0,
+                        IsAdmin:   true,
+                }
+                admin.SetPassword("admin123")
+                DB.Create(&amp;admin)
+                log.Println("Admin user created with username: admin, password: admin123")
+        }</span>
+}
+
+// GetDB returns the database instance
+func GetDB() *gorm.DB <span class="cov0" title="0">{
+        return DB
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package middleware
+
+import (
+        "net/http"
+        "yonatan/labpro/config"
+        "yonatan/labpro/database"
+        "yonatan/labpro/models"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v5"
+)
+
+// WebAdminMiddleware checks for admin authentication via cookies for web routes
+func WebAdminMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                cfg := config.Load()
+
+                // Get token from cookie
+                token, err := c.Cookie("token")
+                if err != nil || token == "" </span><span class="cov0" title="0">{
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Parse and validate token
+                <span class="cov0" title="0">claims := &amp;jwt.MapClaims{}
+                parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov0" title="0">{
+                        return []byte(cfg.JWTSecret), nil
+                }</span>)
+
+                <span class="cov0" title="0">if err != nil || !parsedToken.Valid </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Extract user ID from claims
+                <span class="cov0" title="0">userID, ok := (*claims)["user_id"].(string)
+                if !ok </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Get user from database
+                <span class="cov0" title="0">db := database.GetDB()
+                var user models.User
+                if err := db.Where("id = ?", userID).First(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Check if user is admin
+                <span class="cov0" title="0">if !user.IsAdmin </span><span class="cov0" title="0">{
+                        c.Redirect(http.StatusFound, "/dashboard")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Set user in context
+                <span class="cov0" title="0">c.Set("user", user)
+                c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package middleware
+
+import (
+        "net/http"
+        "strings"
+        "yonatan/labpro/config"
+        "yonatan/labpro/database"
+        "yonatan/labpro/models"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v5"
+)
+
+func AuthMiddleware(cfg *config.Config) gin.HandlerFunc <span class="cov8" title="1">{
+        return func(c *gin.Context) </span><span class="cov8" title="1">{
+                authHeader := c.GetHeader("Authorization")
+                if authHeader == "" </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "Authorization header required",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+                if tokenString == authHeader </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "Bearer token required",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                        return []byte(cfg.JWTSecret), nil
+                }</span>)
+
+                <span class="cov8" title="1">if err != nil || !token.Valid </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "Invalid token",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">claims, ok := token.Claims.(jwt.MapClaims)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "Invalid token claims",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">userID, ok := claims["user_id"].(string)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "Invalid user ID in token",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">var user models.User
+                if err := database.DB.First(&amp;user, "id = ?", userID).Error; err != nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "User not found",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">c.Set("user", user)
+                c.Set("user_id", user.ID)
+                if user.IsAdmin </span><span class="cov8" title="1">{
+                        c.Set("user_role", "admin")
+                }</span> else<span class="cov8" title="1"> {
+                        c.Set("user_role", "user")
+                }</span>
+                <span class="cov8" title="1">c.Next()</span>
+        }
+}
+
+func AdminMiddleware() gin.HandlerFunc <span class="cov8" title="1">{
+        return func(c *gin.Context) </span><span class="cov8" title="1">{
+                user, exists := c.Get("user")
+                if !exists </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{
+                                "status":  "error",
+                                "message": "User not authenticated",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">userModel, ok := user.(models.User)
+                if !ok || !userModel.IsAdmin </span><span class="cov8" title="1">{
+                        c.JSON(http.StatusForbidden, gin.H{
+                                "status":  "error",
+                                "message": "Admin access required",
+                                "data":    nil,
+                        })
+                        c.Abort()
+                        return
+                }</span>
+
+                <span class="cov8" title="1">c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package middleware
+
+import (
+        "net/http"
+        "yonatan/labpro/config"
+        "yonatan/labpro/database"
+        "yonatan/labpro/models"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v5"
+)
+
+// WebAuthMiddleware checks for authentication via cookies for web routes
+func WebAuthMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                cfg := config.Load()
+
+                // Get token from cookie
+                token, err := c.Cookie("token")
+                if err != nil || token == "" </span><span class="cov0" title="0">{
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Parse and validate token
+                <span class="cov0" title="0">claims := &amp;jwt.MapClaims{}
+                parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov0" title="0">{
+                        return []byte(cfg.JWTSecret), nil
+                }</span>)
+
+                <span class="cov0" title="0">if err != nil || !parsedToken.Valid </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true) // Clear invalid token
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Extract user ID from claims
+                <span class="cov0" title="0">userID, ok := (*claims)["user_id"].(string)
+                if !ok </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Get user from database
+                <span class="cov0" title="0">db := database.GetDB()
+                var user models.User
+                if err := db.Where("id = ?", userID).First(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Redirect(http.StatusFound, "/auth/login")
+                        c.Abort()
+                        return
+                }</span>
+
+                // Set user in context
+                <span class="cov0" title="0">c.Set("user", user)
+                c.Next()</span>
+        }
+}
+
+// OptionalWebAuthMiddleware checks for authentication but doesn't redirect if not authenticated
+func OptionalWebAuthMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+
+                cfg := config.Load()
+
+                // Get token from cookie
+                token, err := c.Cookie("token")
+                if err != nil || token == "" </span><span class="cov0" title="0">{
+                        c.Next()
+                        return
+                }</span>
+
+                // Parse and validate token
+                <span class="cov0" title="0">claims := &amp;jwt.MapClaims{}
+                parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov0" title="0">{
+                        return []byte(cfg.JWTSecret), nil
+                }</span>)
+
+                <span class="cov0" title="0">if err != nil || !parsedToken.Valid </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Next()
+                        return
+                }</span>
+
+                // Extract user ID from claims
+                <span class="cov0" title="0">userID, ok := (*claims)["user_id"].(string)
+                if !ok </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Next()
+                        return
+                }</span>
+
+                // Get user from database
+                <span class="cov0" title="0">db := database.GetDB()
+                var user models.User
+                if err := db.Where("id = ?", userID).First(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                        c.SetCookie("token", "", -1, "/", "", false, true)
+                        c.Next()
+                        return
+                }</span>
+
+                // Set user in context
+                <span class="cov0" title="0">c.Set("user", user)
+                c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package models
+
+import (
+        "time"
+
+        "golang.org/x/crypto/bcrypt"
+)
+
+type User struct {
+        ID        string    `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+        Username  string    `json:"username" gorm:"uniqueIndex;not null"`
+        Email     string    `json:"email" gorm:"uniqueIndex;not null"`
+        FirstName string    `json:"first_name" gorm:"not null"`
+        LastName  string    `json:"last_name" gorm:"not null"`
+        Password  string    `json:"-" gorm:"not null"`
+        Balance   float64   `json:"balance" gorm:"default:0"`
+        IsAdmin   bool      `json:"is_admin" gorm:"default:false"`
+        CreatedAt time.Time `json:"created_at"`
+        UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (u *User) SetPassword(password string) error <span class="cov8" title="1">{
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">u.Password = string(hashedPassword)
+        return nil</span>
+}
+
+func (u *User) CheckPassword(password string) bool <span class="cov8" title="1">{
+        err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+        return err == nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package models
+
+import (
+        "time"
+
+        "gorm.io/gorm"
+)
+
+type UserCourse struct {
+        ID          string    `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+        UserID      string    `json:"user_id" gorm:"not null"`
+        CourseID    string    `json:"course_id" gorm:"not null"`
+        PurchasedAt time.Time `json:"purchased_at"`
+
+        User   User   `json:"-" gorm:"foreignKey:UserID"`
+        Course Course `json:"-" gorm:"foreignKey:CourseID"`
+}
+
+func (uc *UserCourse) BeforeCreate(tx *gorm.DB) error <span class="cov8" title="1">{
+        uc.PurchasedAt = time.Now()
+        return nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package api
+
+import (
+        "yonatan/labpro/config"
+        apiAuth "yonatan/labpro/controllers/api"
+        "yonatan/labpro/middleware"
+
+        "github.com/gin-gonic/gin"
+)
+
+func SetupAuthRoutes(api *gin.RouterGroup, authController *apiAuth.AuthAPIController, cfg *config.Config) <span class="cov8" title="1">{
+        auth := api.Group("/auth")
+        </span><span class="cov8" title="1">{
+                auth.POST("/register", authController.Register)
+                auth.POST("/login", authController.Login)
+                auth.POST("/logout", authController.Logout)
+                auth.GET("/self", middleware.AuthMiddleware(cfg), authController.GetProfile)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package api
+
+import (
+        "yonatan/labpro/config"
+        apiAdminCourse "yonatan/labpro/controllers/api/admin"
+        apiUserCourse "yonatan/labpro/controllers/api/user"
+        "yonatan/labpro/middleware"
+
+        "github.com/gin-gonic/gin"
+)
+
+func SetupCourseRoutes(api *gin.RouterGroup,
+        adminCourseController *apiAdminCourse.CourseAPIController,
+        userCourseController *apiUserCourse.CourseAPIController,
+        cfg *config.Config) <span class="cov8" title="1">{
+
+        // User course routes
+        courses := api.Group("/courses")
+        courses.Use(middleware.AuthMiddleware(cfg))
+        </span><span class="cov8" title="1">{
+                // GET /api/courses
+                courses.GET("", userCourseController.GetCourses)
+                // GET /api/courses/:courseId
+                courses.GET("/:courseId", userCourseController.GetCourseByID)
+                // POST /api/courses/:courseId/buy
+                courses.POST("/:courseId/buy", userCourseController.PurchaseCourse)
+                // GET /api/courses/my-courses
+                courses.GET("/my-courses", userCourseController.GetMyCourses)
+        }</span>
+
+        // Admin course routes
+        <span class="cov8" title="1">adminCourses := api.Group("/courses")
+        adminCourses.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
+        </span><span class="cov8" title="1">{
+                // POST /api/courses (admin only)
+                adminCourses.POST("", adminCourseController.CreateCourse)
+                // PUT /api/courses/:courseId (admin only)
+                adminCourses.PUT("/:courseId", adminCourseController.UpdateCourse)
+                // DELETE /api/courses/:courseId (admin only)
+                adminCourses.DELETE("/:courseId", adminCourseController.DeleteCourse)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package api
+
+import (
+        "yonatan/labpro/config"
+        apiAdminModule "yonatan/labpro/controllers/api/admin"
+        apiUserModule "yonatan/labpro/controllers/api/user"
+        "yonatan/labpro/middleware"
+
+        "github.com/gin-gonic/gin"
+)
+
+func SetupModuleRoutes(api *gin.RouterGroup,
+        adminModuleController *apiAdminModule.ModuleAPIController,
+        userModuleController *apiUserModule.ModuleAPIController,
+        cfg *config.Config) <span class="cov8" title="1">{
+
+        // User module routes
+        modules := api.Group("/modules")
+        modules.Use(middleware.AuthMiddleware(cfg))
+        </span><span class="cov8" title="1">{
+                // GET /api/modules/:id
+                modules.GET("/:id", userModuleController.GetModuleByID)
+                // PATCH /api/modules/:id/complete
+                modules.PATCH("/:id/complete", userModuleController.CompleteModule)
+        }</span>
+
+        // Course modules routes (both admin and user)
+        <span class="cov8" title="1">courseModules := api.Group("/courses/:courseId/modules")
+        courseModules.Use(middleware.AuthMiddleware(cfg))
+        </span><span class="cov8" title="1">{
+                // GET /api/courses/:courseId/modules (all authenticated users)
+                courseModules.GET("", userModuleController.GetCourseModules)
+        }</span>
+
+        // Admin module routes
+        <span class="cov8" title="1">adminModules := api.Group("/modules")
+        adminModules.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
+        </span><span class="cov8" title="1">{
+                // PUT /api/modules/:id (admin only)
+                adminModules.PUT("/:id", adminModuleController.UpdateModule)
+                // DELETE /api/modules/:id (admin only)
+                adminModules.DELETE("/:id", adminModuleController.DeleteModule)
+        }</span>
+
+        // Admin course module routes
+        <span class="cov8" title="1">adminCourseModules := api.Group("/courses/:courseId/modules")
+        adminCourseModules.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
+        </span><span class="cov8" title="1">{
+                // POST /api/courses/:courseId/modules (admin only)
+                adminCourseModules.POST("", adminModuleController.CreateModule)
+                // PATCH /api/courses/:courseId/modules/reorder (admin only)
+                adminCourseModules.PATCH("/reorder", adminModuleController.ReorderModules)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package api
+
+import (
+        "yonatan/labpro/config"
+        apiAuth "yonatan/labpro/controllers/api"
+        apiAdminCourse "yonatan/labpro/controllers/api/admin"
+        apiAdminModule "yonatan/labpro/controllers/api/admin"
+        apiAdminUser "yonatan/labpro/controllers/api/admin"
+        apiUserCourse "yonatan/labpro/controllers/api/user"
+        apiUserModule "yonatan/labpro/controllers/api/user"
+
+        "github.com/gin-gonic/gin"
+)
+
+// SetupAPIRoutes sets up all API routes
+func SetupAPIRoutes(api *gin.RouterGroup,
+        authController *apiAuth.AuthAPIController,
+        adminCourseController *apiAdminCourse.CourseAPIController,
+        adminModuleController *apiAdminModule.ModuleAPIController,
+        adminUserController *apiAdminUser.UserAPIController,
+        userCourseController *apiUserCourse.CourseAPIController,
+        userModuleController *apiUserModule.ModuleAPIController,
+        cfg *config.Config) <span class="cov0" title="0">{
+        // Setup all API route groups
+        SetupAuthRoutes(api, authController, cfg)
+        SetupCourseRoutes(api, adminCourseController, userCourseController, cfg)
+        SetupModuleRoutes(api, adminModuleController, userModuleController, cfg)
+        SetupUserRoutes(api, adminUserController, cfg)
+}</span>
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">package api
+
+import (
+        "yonatan/labpro/config"
+        apiAdminUser "yonatan/labpro/controllers/api/admin"
+        "yonatan/labpro/middleware"
+
+        "github.com/gin-gonic/gin"
+)
+
+func SetupUserRoutes(api *gin.RouterGroup,
+        adminUserController *apiAdminUser.UserAPIController,
+        cfg *config.Config) <span class="cov8" title="1">{
+
+        // All user routes are admin-only according to the contract
+        users := api.Group("/users")
+        users.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
+        </span><span class="cov8" title="1">{
+                // GET /api/users
+                users.GET("", adminUserController.GetUsers)
+                // GET /api/users/:id
+                users.GET("/:id", adminUserController.GetUserByID)
+                // POST /api/users/:id/balance
+                users.POST("/:id/balance", adminUserController.UpdateUserBalance)
+                // PUT /api/users/:id
+                users.PUT("/:id", adminUserController.UpdateUser)
+                // DELETE /api/users/:id
+                users.DELETE("/:id", adminUserController.DeleteUser)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package services
+
+import (
+        "errors"
+        "time"
+        "yonatan/labpro/config"
+        "yonatan/labpro/database"
+        "yonatan/labpro/models"
+
+        "github.com/golang-jwt/jwt/v5"
+)
+
+type AuthService struct {
+        config *config.Config
+}
+
+func NewAuthService(cfg *config.Config) *AuthService <span class="cov8" title="1">{
+        return &amp;AuthService{
+                config: cfg,
+        }
+}</span>
+
+func (as *AuthService) Register(firstName, lastName, username, email, password string) (*models.User, error) <span class="cov8" title="1">{
+        // Check if username or email already exists
+        var existingUser models.User
+        if err := database.DB.Where("username = ? OR email = ?", username, email).First(&amp;existingUser).Error; err == nil </span><span class="cov8" title="1">{
+                if existingUser.Username == username </span><span class="cov8" title="1">{
+                        return nil, errors.New("username already exists")
+                }</span>
+                <span class="cov8" title="1">return nil, errors.New("email already exists")</span>
+        }
+
+        // Create new user
+        <span class="cov8" title="1">user := models.User{
+                FirstName: firstName,
+                LastName:  lastName,
+                Username:  username,
+                Email:     email,
+                Balance:   0,
+                IsAdmin:   false,
+        }
+
+        if err := user.SetPassword(password); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("failed to hash password")
+        }</span>
+
+        <span class="cov8" title="1">if err := database.DB.Create(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("failed to create user")
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (as *AuthService) Login(identifier, password string) (string, *models.User, error) <span class="cov8" title="1">{
+        var user models.User
+
+        // Find user by username or email
+        if err := database.DB.Where("username = ? OR email = ?", identifier, identifier).First(&amp;user).Error; err != nil </span><span class="cov8" title="1">{
+                return "", nil, errors.New("invalid credentials")
+        }</span>
+
+        // Check password
+        <span class="cov8" title="1">if !user.CheckPassword(password) </span><span class="cov8" title="1">{
+                return "", nil, errors.New("invalid credentials")
+        }</span>
+
+        // Generate JWT token
+        <span class="cov8" title="1">token, err := as.generateToken(user.ID)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, errors.New("failed to generate token")
+        }</span>
+
+        <span class="cov8" title="1">return token, &amp;user, nil</span>
+}
+
+func (as *AuthService) generateToken(userID string) (string, error) <span class="cov8" title="1">{
+        claims := jwt.MapClaims{
+                "user_id": userID,
+                "exp":     time.Now().Add(time.Hour * 1).Unix(), // 1 hour expiration
+                "iat":     time.Now().Unix(),
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        return token.SignedString([]byte(as.config.JWTSecret))
+}</span>
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package services
+
+import (
+        "errors"
+        "fmt"
+        "io"
+        "mime/multipart"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+        "yonatan/labpro/config"
+        "yonatan/labpro/models"
+
+        "gorm.io/gorm"
+)
+
+type CourseService struct {
+        db     *gorm.DB
+        config *config.Config
+}
+
+func NewCourseService(db *gorm.DB, cfg *config.Config) *CourseService <span class="cov8" title="1">{
+        return &amp;CourseService{db: db, config: cfg}
+}</span>
+
+// CalculateCourseProgress calculates the progress percentage for a user in a specific course
+func (cs *CourseService) CalculateCourseProgress(userID, courseID string) (float64, int64, int64) <span class="cov8" title="1">{
+        var totalModules, completedModules int64
+
+        cs.db.Model(&amp;models.Module{}).Where("course_id = ?", courseID).Count(&amp;totalModules)
+        cs.db.Model(&amp;models.UserModuleProgress{}).
+                Joins("JOIN modules ON user_module_progresses.module_id = modules.id").
+                Where("user_module_progresses.user_id = ? AND modules.course_id = ? AND user_module_progresses.is_completed = ?",
+                        userID, courseID, true).Count(&amp;completedModules)
+
+        percentage := float64(0)
+        if totalModules &gt; 0 </span><span class="cov0" title="0">{
+                percentage = float64(completedModules) / float64(totalModules) * 100
+        }</span>
+
+        <span class="cov8" title="1">return percentage, totalModules, completedModules</span>
+}
+
+func (cs *CourseService) CreateCourse(course *models.Course) (*models.Course, error) <span class="cov8" title="1">{
+        if err := cs.db.Create(course).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return course, nil</span>
+}
+
+func (cs *CourseService) GetCourses(query string, page, limit int, userID interface{}) ([]map[string]interface{}, map[string]interface{}, error) <span class="cov8" title="1">{
+        var courses []models.Course
+        var total int64
+
+        db := cs.db.Model(&amp;models.Course{})
+
+        // Apply search filter
+        if query != "" </span><span class="cov8" title="1">{
+                searchTerm := "%" + strings.ToLower(query) + "%"
+                db = db.Where("LOWER(title) LIKE ? OR EXISTS (SELECT 1 FROM unnest(topics) AS topic WHERE LOWER(topic) LIKE ?)",
+                        searchTerm, searchTerm)
+        }</span>
+
+        // Count total
+        <span class="cov8" title="1">db.Count(&amp;total)
+
+        // Apply pagination
+        offset := (page - 1) * limit
+        if err := db.Offset(offset).Limit(limit).Preload("Modules").Find(&amp;courses).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, nil, err
+        }</span>
+
+        // Convert to response format
+        <span class="cov8" title="1">result := make([]map[string]interface{}, len(courses))
+        for i, course := range courses </span><span class="cov8" title="1">{
+                isPurchased := false
+                if userID != nil </span><span class="cov8" title="1">{
+                        // Check if user purchased this course
+                        var userCourse models.UserCourse
+                        err := cs.db.Where("user_id = ? AND course_id = ?", userID, course.ID).First(&amp;userCourse).Error
+                        isPurchased = (err == nil)
+                }</span>
+
+                <span class="cov8" title="1">result[i] = map[string]interface{}{
+                        "id":              course.ID,
+                        "title":           course.Title,
+                        "instructor":      course.Instructor,
+                        "description":     course.Description,
+                        "topics":          course.Topics,
+                        "price":           course.Price,
+                        "thumbnail_image": course.Thumbnail,
+                        "total_modules":   len(course.Modules),
+                        "created_at":      course.CreatedAt,
+                        "updated_at":      course.UpdatedAt,
+                        "is_purchased":    isPurchased,
+                }</span>
+        }
+
+        <span class="cov8" title="1">totalPages := int((total + int64(limit) - 1) / int64(limit))
+        pagination := map[string]interface{}{
+                "current_page": page,
+                "total_pages":  totalPages,
+                "total_items":  total,
+        }
+
+        return result, pagination, nil</span>
+}
+
+func (cs *CourseService) GetCourseByID(id string, userID interface{}) (map[string]interface{}, error) <span class="cov8" title="1">{
+        var course models.Course
+        if err := cs.db.Preload("Modules").First(&amp;course, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">isPurchased := false
+        progressPercentage := float64(0)
+        completedModules := int64(0)
+        totalModules := int64(len(course.Modules))
+
+        if userID != nil </span><span class="cov8" title="1">{
+                // Check if user purchased this course
+                var userCourse models.UserCourse
+                err := cs.db.Where("user_id = ? AND course_id = ?", userID, course.ID).First(&amp;userCourse).Error
+                isPurchased = (err == nil)
+
+                // Calculate progress if course is purchased
+                if isPurchased </span><span class="cov0" title="0">{
+                        userIDStr, ok := userID.(string)
+                        if ok </span><span class="cov0" title="0">{
+                                progressPercentage, totalModules, completedModules = cs.CalculateCourseProgress(userIDStr, id)
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "id":                  course.ID,
+                "title":               course.Title,
+                "description":         course.Description,
+                "instructor":          course.Instructor,
+                "topics":              course.Topics,
+                "price":               course.Price,
+                "thumbnail_image":     course.Thumbnail,
+                "total_modules":       totalModules,
+                "completed_modules":   completedModules,
+                "progress_percentage": progressPercentage,
+                "created_at":          course.CreatedAt,
+                "updated_at":          course.UpdatedAt,
+                "is_purchased":        isPurchased,
+        }
+
+        return result, nil</span>
+}
+
+func (cs *CourseService) UpdateCourse(course *models.Course) (*models.Course, error) <span class="cov8" title="1">{
+        if err := cs.db.Save(course).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return course, nil</span>
+}
+
+func (cs *CourseService) DeleteCourse(id string) error <span class="cov8" title="1">{
+        // First delete all modules associated with this course
+        if err := cs.db.Where("course_id = ?", id).Delete(&amp;models.Module{}).Error; err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        // Delete user course relationships
+        <span class="cov8" title="1">if err := cs.db.Where("course_id = ?", id).Delete(&amp;models.UserCourse{}).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Delete the course
+        <span class="cov8" title="1">if err := cs.db.Delete(&amp;models.Course{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (cs *CourseService) BuyCourse(courseID, userID string) (map[string]interface{}, error) <span class="cov8" title="1">{
+        // Check if course exists
+        var course models.Course
+        if err := cs.db.First(&amp;course, "id = ?", courseID).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, errors.New("course not found")
+        }</span>
+
+        // Check if user already purchased this course
+        <span class="cov8" title="1">var existingUserCourse models.UserCourse
+        if err := cs.db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&amp;existingUserCourse).Error; err == nil </span><span class="cov8" title="1">{
+                return nil, errors.New("course already purchased")
+        }</span>
+
+        // Get user and check balance
+        <span class="cov8" title="1">var user models.User
+        if err := cs.db.First(&amp;user, "id = ?", userID).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("user not found")
+        }</span>
+
+        <span class="cov8" title="1">if user.Balance &lt; course.Price </span><span class="cov8" title="1">{
+                return nil, errors.New("insufficient balance")
+        }</span>
+
+        // Start transaction
+        <span class="cov8" title="1">tx := cs.db.Begin()
+
+        // Deduct balance
+        user.Balance -= course.Price
+        if err := tx.Save(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return nil, err
+        }</span>
+
+        // Create user course relationship
+        <span class="cov8" title="1">userCourse := models.UserCourse{
+                UserID:   userID,
+                CourseID: courseID,
+        }
+        if err := tx.Create(&amp;userCourse).Error; err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">tx.Commit()
+
+        result := map[string]interface{}{
+                "course_id":      courseID,
+                "user_balance":   user.Balance,
+                "transaction_id": userCourse.ID,
+        }
+
+        return result, nil</span>
+}
+
+func (cs *CourseService) GetMyCourses(userID, query string, page, limit int) ([]map[string]interface{}, map[string]interface{}, error) <span class="cov8" title="1">{
+        var userCourses []models.UserCourse
+        var total int64
+
+        db := cs.db.Model(&amp;models.UserCourse{}).Where("user_id = ?", userID)
+
+        // Apply search filter
+        if query != "" </span><span class="cov0" title="0">{
+                searchTerm := "%" + strings.ToLower(query) + "%"
+                db = db.Joins("JOIN courses ON user_courses.course_id = courses.id").
+                        Where("LOWER(courses.title) LIKE ? OR LOWER(courses.instructor) LIKE ? OR EXISTS (SELECT 1 FROM unnest(courses.topics) AS topic WHERE LOWER(topic) LIKE ?)",
+                                searchTerm, searchTerm, searchTerm)
+        }</span>
+
+        // Count total
+        <span class="cov8" title="1">db.Count(&amp;total)
+
+        // Apply pagination
+        offset := (page - 1) * limit
+        if err := db.Offset(offset).Limit(limit).Preload("Course").Find(&amp;userCourses).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, nil, err
+        }</span>
+
+        // Convert to response format
+        <span class="cov8" title="1">result := make([]map[string]interface{}, len(userCourses))
+        for i, userCourse := range userCourses </span><span class="cov8" title="1">{
+                // Calculate progress percentage using centralized logic
+                progressPercentage, totalModules, completedModules := cs.CalculateCourseProgress(userID, userCourse.CourseID)
+
+                result[i] = map[string]interface{}{
+                        "id":                  userCourse.Course.ID,
+                        "title":               userCourse.Course.Title,
+                        "instructor":          userCourse.Course.Instructor,
+                        "description":         userCourse.Course.Description,
+                        "topics":              userCourse.Course.Topics,
+                        "price":               userCourse.Course.Price,
+                        "thumbnail_image":     userCourse.Course.Thumbnail,
+                        "progress_percentage": progressPercentage,
+                        "total_modules":       totalModules,
+                        "completed_modules":   completedModules,
+                        "purchased_at":        userCourse.PurchasedAt.Format("Jan 2, 2006"),
+                }
+        }</span>
+
+        <span class="cov8" title="1">totalPages := int((total + int64(limit) - 1) / int64(limit))
+        pagination := map[string]interface{}{
+                "current_page": page,
+                "total_pages":  totalPages,
+                "total_items":  total,
+        }
+
+        return result, pagination, nil</span>
+}
+
+func (cs *CourseService) SaveThumbnail(file *multipart.FileHeader) (string, error) <span class="cov0" title="0">{
+        // Create uploads directory if it doesn't exist
+        uploadDir := "./uploads/thumbnails"
+        if err := os.MkdirAll(uploadDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Generate unique filename
+        <span class="cov0" title="0">filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+        filepath := filepath.Join(uploadDir, filename)
+
+        // Open uploaded file
+        src, err := file.Open()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">defer src.Close()
+
+        // Create destination file
+        dst, err := os.Create(filepath)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">defer dst.Close()
+
+        // Copy file content
+        if _, err = io.Copy(dst, src); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Return complete URL including base URL from config
+        <span class="cov0" title="0">return fmt.Sprintf("%s/uploads/thumbnails/%s", cs.config.BaseURL, filename), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package services
+
+import (
+        "errors"
+        "fmt"
+        "io"
+        "mime/multipart"
+        "os"
+        "path/filepath"
+        "time"
+        "yonatan/labpro/config"
+        "yonatan/labpro/models"
+
+        "gorm.io/gorm"
+)
+
+type ModuleService struct {
+        db     *gorm.DB
+        config *config.Config
+}
+
+func NewModuleService(db *gorm.DB, cfg *config.Config) *ModuleService <span class="cov8" title="1">{
+        return &amp;ModuleService{db: db, config: cfg}
+}</span>
+
+func (ms *ModuleService) CreateModule(courseID, title, description string, pdfURL, videoURL *string) (*models.Module, error) <span class="cov8" title="1">{
+        // Get the next order number for this course
+        var maxOrder int
+        ms.db.Model(&amp;models.Module{}).Where("course_id = ?", courseID).Select("COALESCE(MAX(order), 0)").Scan(&amp;maxOrder)
+
+        module := models.Module{
+                CourseID:     courseID,
+                Title:        title,
+                Description:  description,
+                Order:        maxOrder + 1,
+                PDFContent:   pdfURL,
+                VideoContent: videoURL,
+        }
+
+        if err := ms.db.Create(&amp;module).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;module, nil</span>
+}
+
+func (ms *ModuleService) GetModules(courseID string, userID interface{}, page, limit int) ([]map[string]interface{}, map[string]interface{}, error) <span class="cov8" title="1">{
+        var modules []models.Module
+        var total int64
+
+        db := ms.db.Model(&amp;models.Module{}).Where("course_id = ?", courseID)
+
+        // Count total
+        db.Count(&amp;total)
+
+        // Apply pagination
+        offset := (page - 1) * limit
+        if err := db.Order("\"order\" ASC").Offset(offset).Limit(limit).Find(&amp;modules).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, nil, err
+        }</span>
+
+        // Convert to response format
+        <span class="cov8" title="1">result := make([]map[string]interface{}, len(modules))
+        for i, module := range modules </span><span class="cov8" title="1">{
+                isCompleted := false
+                if userID != nil </span><span class="cov8" title="1">{
+                        // Check if user completed this module
+                        var progress models.UserModuleProgress
+                        err := ms.db.Where("user_id = ? AND module_id = ?", userID, module.ID).First(&amp;progress).Error
+                        isCompleted = (err == nil &amp;&amp; progress.IsCompleted)
+                }</span>
+
+                <span class="cov8" title="1">result[i] = map[string]interface{}{
+                        "id":            module.ID,
+                        "course_id":     module.CourseID,
+                        "title":         module.Title,
+                        "description":   module.Description,
+                        "order":         module.Order,
+                        "pdf_content":   module.PDFContent,
+                        "video_content": module.VideoContent,
+                        "is_completed":  isCompleted,
+                        "created_at":    module.CreatedAt,
+                        "updated_at":    module.UpdatedAt,
+                }</span>
+        }
+
+        <span class="cov8" title="1">totalPages := int((total + int64(limit) - 1) / int64(limit))
+        pagination := map[string]interface{}{
+                "current_page": page,
+                "total_pages":  totalPages,
+                "total_items":  total,
+        }
+
+        return result, pagination, nil</span>
+}
+
+func (ms *ModuleService) GetModuleByID(id string, userID interface{}, userRole string) (map[string]interface{}, error) <span class="cov8" title="1">{
+        var module models.Module
+        if err := ms.db.First(&amp;module, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        // Check if user has access to this module (purchased course or admin)
+        <span class="cov8" title="1">if userRole != "admin" &amp;&amp; userID != nil </span><span class="cov8" title="1">{
+                hasAccess, err := ms.CheckCourseAccess(userID.(string), module.CourseID)
+                if err != nil || !hasAccess </span><span class="cov8" title="1">{
+                        return nil, errors.New("access denied")
+                }</span>
+        }
+
+        <span class="cov8" title="1">isCompleted := false
+        if userID != nil &amp;&amp; userRole != "admin" </span><span class="cov8" title="1">{
+                // Check if user completed this module
+                var progress models.UserModuleProgress
+                err := ms.db.Where("user_id = ? AND module_id = ?", userID, module.ID).First(&amp;progress).Error
+                isCompleted = (err == nil &amp;&amp; progress.IsCompleted)
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "id":            module.ID,
+                "course_id":     module.CourseID,
+                "title":         module.Title,
+                "description":   module.Description,
+                "order":         module.Order,
+                "pdf_content":   module.PDFContent,
+                "video_content": module.VideoContent,
+                "is_completed":  isCompleted,
+                "created_at":    module.CreatedAt,
+                "updated_at":    module.UpdatedAt,
+        }
+
+        return result, nil</span>
+}
+
+func (ms *ModuleService) UpdateModule(id, title, description string, pdfURL, videoURL *string) (*models.Module, error) <span class="cov8" title="1">{
+        var module models.Module
+        if err := ms.db.First(&amp;module, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">module.Title = title
+        module.Description = description
+
+        if pdfURL != nil </span><span class="cov8" title="1">{
+                module.PDFContent = pdfURL
+        }</span>
+        <span class="cov8" title="1">if videoURL != nil </span><span class="cov8" title="1">{
+                module.VideoContent = videoURL
+        }</span>
+
+        <span class="cov8" title="1">if err := ms.db.Save(&amp;module).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;module, nil</span>
+}
+
+func (ms *ModuleService) DeleteModule(id string) error <span class="cov8" title="1">{
+        // Delete module progress records
+        if err := ms.db.Where("module_id = ?", id).Delete(&amp;models.UserModuleProgress{}).Error; err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        // Delete the module
+        <span class="cov8" title="1">if err := ms.db.Delete(&amp;models.Module{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (ms *ModuleService) ReorderModules(courseID string, moduleOrder []struct {
+        ID    string `json:"id" binding:"required"`
+        Order int    `json:"order" binding:"required"`
+}) (map[string]interface{}, error) <span class="cov8" title="1">{
+        // Start transaction
+        tx := ms.db.Begin()
+
+        for _, item := range moduleOrder </span><span class="cov8" title="1">{
+                if err := tx.Model(&amp;models.Module{}).Where("id = ? AND course_id = ?", item.ID, courseID).Update("order", item.Order).Error; err != nil </span><span class="cov0" title="0">{
+                        tx.Rollback()
+                        return nil, err
+                }</span>
+        }
+
+        <span class="cov8" title="1">tx.Commit()
+
+        result := map[string]interface{}{
+                "module_order": moduleOrder,
+        }
+
+        return result, nil</span>
+}
+
+func (ms *ModuleService) CompleteModule(moduleID, userID string) (map[string]interface{}, error) <span class="cov8" title="1">{
+        // Check if module exists and user has access
+        var module models.Module
+        if err := ms.db.First(&amp;module, "id = ?", moduleID).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, errors.New("module not found")
+        }</span>
+
+        // Check if user purchased the course
+        <span class="cov8" title="1">hasAccess, err := ms.CheckCourseAccess(userID, module.CourseID)
+        if err != nil || !hasAccess </span><span class="cov8" title="1">{
+                return nil, errors.New("access denied. Course not purchased")
+        }</span>
+
+        // Create or update user module progress
+        <span class="cov8" title="1">var progress models.UserModuleProgress
+        err = ms.db.Where("user_id = ? AND module_id = ?", userID, moduleID).First(&amp;progress).Error
+        if err == gorm.ErrRecordNotFound </span><span class="cov8" title="1">{
+                // Create new progress record
+                progress = models.UserModuleProgress{
+                        UserID:      userID,
+                        ModuleID:    moduleID,
+                        IsCompleted: true,
+                }
+                if err := ms.db.Create(&amp;progress).Error; err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        } else<span class="cov8" title="1"> if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span> else<span class="cov8" title="1"> {
+                // Update existing record
+                progress.IsCompleted = true
+                if err := ms.db.Save(&amp;progress).Error; err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        }
+
+        // Calculate course progress
+        <span class="cov8" title="1">var totalModules, completedModules int64
+        ms.db.Model(&amp;models.Module{}).Where("course_id = ?", module.CourseID).Count(&amp;totalModules)
+        ms.db.Model(&amp;models.UserModuleProgress{}).
+                Joins("JOIN modules ON user_module_progress.module_id = modules.id").
+                Where("user_module_progress.user_id = ? AND modules.course_id = ? AND user_module_progress.is_completed = ?",
+                        userID, module.CourseID, true).Count(&amp;completedModules)
+
+        percentage := float64(0)
+        if totalModules &gt; 0 </span><span class="cov8" title="1">{
+                percentage = float64(completedModules) / float64(totalModules) * 100
+        }</span>
+
+        <span class="cov8" title="1">result := map[string]interface{}{
+                "module_id":    moduleID,
+                "is_completed": true,
+                "course_progress": map[string]interface{}{
+                        "total_modules":     totalModules,
+                        "completed_modules": completedModules,
+                        "percentage":        percentage,
+                },
+                "certificate_url": nil,
+        }
+
+        // If 100% complete, generate certificate
+        if percentage &gt;= 100 </span><span class="cov0" title="0">{
+                certificateURL, err := ms.generateCertificate(userID, module.CourseID)
+                if err == nil </span><span class="cov0" title="0">{
+                        result["certificate_url"] = certificateURL
+                }</span>
+        }
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+func (ms *ModuleService) CheckCourseAccess(userID, courseID string) (bool, error) <span class="cov8" title="1">{
+        var userCourse models.UserCourse
+        err := ms.db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&amp;userCourse).Error
+        if err == gorm.ErrRecordNotFound </span><span class="cov8" title="1">{
+                return false, nil
+        }</span>
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+        <span class="cov8" title="1">return true, nil</span>
+}
+
+func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) <span class="cov8" title="1">{
+        // Create uploads directory if it doesn't exist
+        uploadDir := "./uploads/pdfs"
+        if err := os.MkdirAll(uploadDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Generate unique filename
+        <span class="cov8" title="1">filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+        filepath := filepath.Join(uploadDir, filename)
+
+        // Open uploaded file
+        src, err := file.Open()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">defer src.Close()
+
+        // Create destination file
+        dst, err := os.Create(filepath)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">defer dst.Close()
+
+        // Copy file content
+        if _, err = io.Copy(dst, src); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Return complete URL including base URL from config
+        <span class="cov8" title="1">return fmt.Sprintf("%s/uploads/pdfs/%s", ms.config.BaseURL, filename), nil</span>
+}
+
+func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) <span class="cov8" title="1">{
+        // Create uploads directory if it doesn't exist
+        uploadDir := "./uploads/videos"
+        if err := os.MkdirAll(uploadDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Generate unique filename
+        <span class="cov8" title="1">filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+        filepath := filepath.Join(uploadDir, filename)
+
+        // Open uploaded file
+        src, err := file.Open()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">defer src.Close()
+
+        // Create destination file
+        dst, err := os.Create(filepath)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">defer dst.Close()
+
+        // Copy file content
+        if _, err = io.Copy(dst, src); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Return complete URL including base URL from config
+        <span class="cov8" title="1">return fmt.Sprintf("%s/uploads/videos/%s", ms.config.BaseURL, filename), nil</span>
+}
+
+func (ms *ModuleService) generateCertificate(userID, courseID string) (string, error) <span class="cov0" title="0">{
+        // Get user and course info
+        var user models.User
+        var course models.Course
+
+        if err := ms.db.First(&amp;user, "id = ?", userID).Error; err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov0" title="0">if err := ms.db.First(&amp;course, "id = ?", courseID).Error; err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Create certificates directory if it doesn't exist
+        <span class="cov0" title="0">uploadDir := "./uploads/certificates"
+        if err := os.MkdirAll(uploadDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Generate certificate content (simple text format for now)
+        <span class="cov0" title="0">certificateContent := fmt.Sprintf(
+                "CERTIFICATE OF COMPLETION\n\n"+
+                        "This is to certify that\n\n"+
+                        "%s %s (%s)\n\n"+
+                        "has successfully completed the course\n\n"+
+                        "%s\n\n"+
+                        "Instructor: %s\n\n"+
+                        "Date of Completion: %s\n",
+                user.FirstName, user.LastName, user.Username,
+                course.Title,
+                course.Instructor,
+                time.Now().Format("January 2, 2006"),
+        )
+
+        // Save certificate
+        filename := fmt.Sprintf("certificate_%s_%s_%d.txt", userID, courseID, time.Now().Unix())
+        filepath := filepath.Join(uploadDir, filename)
+
+        if err := os.WriteFile(filepath, []byte(certificateContent), 0644); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        // Return relative URL
+        <span class="cov0" title="0">return fmt.Sprintf("/uploads/certificates/%s", filename), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file22" style="display: none">package services
+
+import (
+        "errors"
+        "strings"
+        "yonatan/labpro/models"
+
+        "golang.org/x/crypto/bcrypt"
+        "gorm.io/gorm"
+)
+
+type UserService struct {
+        db *gorm.DB
+}
+
+func NewUserService(db *gorm.DB) *UserService <span class="cov8" title="1">{
+        return &amp;UserService{db: db}
+}</span>
+
+func (us *UserService) GetUsers(query string, page, limit int) ([]map[string]interface{}, map[string]interface{}, error) <span class="cov8" title="1">{
+        var users []models.User
+        var total int64
+
+        db := us.db.Model(&amp;models.User{})
+
+        // Apply search filter
+        if query != "" </span><span class="cov8" title="1">{
+                searchTerm := "%" + strings.ToLower(query) + "%"
+                db = db.Where("LOWER(username) LIKE ? OR LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(email) LIKE ?",
+                        searchTerm, searchTerm, searchTerm, searchTerm)
+        }</span>
+
+        // Count total
+        <span class="cov8" title="1">db.Count(&amp;total)
+
+        // Apply pagination
+        offset := (page - 1) * limit
+        if err := db.Offset(offset).Limit(limit).Find(&amp;users).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, nil, err
+        }</span>
+
+        // Convert to response format (exclude password)
+        <span class="cov8" title="1">result := make([]map[string]interface{}, len(users))
+        for i, user := range users </span><span class="cov8" title="1">{
+                result[i] = map[string]interface{}{
+                        "id":         user.ID,
+                        "username":   user.Username,
+                        "email":      user.Email,
+                        "first_name": user.FirstName,
+                        "last_name":  user.LastName,
+                        "balance":    user.Balance,
+                }
+        }</span>
+
+        <span class="cov8" title="1">totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+        // Calculate pagination values
+        prevPage := page - 1
+        nextPage := page + 1
+
+        if prevPage &lt; 1 </span><span class="cov8" title="1">{
+                prevPage = 1
+        }</span>
+        <span class="cov8" title="1">if nextPage &gt; totalPages </span><span class="cov8" title="1">{
+                nextPage = totalPages
+        }</span>
+
+        <span class="cov8" title="1">pagination := map[string]interface{}{
+                "current_page": page,
+                "total_pages":  totalPages,
+                "total_items":  total,
+                "prev_page":    prevPage,
+                "next_page":    nextPage,
+                "page":         page, // For compatibility
+        }
+
+        return result, pagination, nil</span>
+}
+
+func (us *UserService) GetUserByID(id string) (map[string]interface{}, error) <span class="cov8" title="1">{
+        var user models.User
+        if err := us.db.First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        // Count courses purchased by this user
+        <span class="cov8" title="1">var coursesPurchased int64
+        us.db.Model(&amp;models.UserCourse{}).Where("user_id = ?", id).Count(&amp;coursesPurchased)
+
+        result := map[string]interface{}{
+                "id":                user.ID,
+                "username":          user.Username,
+                "email":             user.Email,
+                "first_name":        user.FirstName,
+                "last_name":         user.LastName,
+                "balance":           user.Balance,
+                "courses_purchased": coursesPurchased,
+        }
+
+        return result, nil</span>
+}
+
+func (us *UserService) UpdateUserBalance(id string, increment float64) (*models.User, error) <span class="cov8" title="1">{
+        var user models.User
+        if err := us.db.First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">user.Balance += increment
+        if user.Balance &lt; 0 </span><span class="cov0" title="0">{
+                user.Balance = 0
+        }</span>
+
+        <span class="cov8" title="1">if err := us.db.Save(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (us *UserService) UpdateUser(id, email, username, firstName, lastName, password string) (*models.User, error) <span class="cov8" title="1">{
+        var user models.User
+        if err := us.db.First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        // Check if username or email already exists (excluding current user)
+        <span class="cov8" title="1">var existingUser models.User
+        if err := us.db.Where("(username = ? OR email = ?) AND id != ?", username, email, id).First(&amp;existingUser).Error; err == nil </span><span class="cov0" title="0">{
+                return nil, errors.New("username or email already exists")
+        }</span>
+
+        <span class="cov8" title="1">user.Email = email
+        user.Username = username
+        user.FirstName = firstName
+        user.LastName = lastName
+
+        // Update password if provided
+        if password != "" </span><span class="cov8" title="1">{
+                hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">user.Password = string(hashedPassword)</span>
+        }
+
+        <span class="cov8" title="1">if err := us.db.Save(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (us *UserService) DeleteUser(id string) error <span class="cov8" title="1">{
+        // Check if user exists
+        var user models.User
+        if err := us.db.First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return errors.New("user not found")
+        }</span>
+
+        // Don't allow deleting admin user
+        <span class="cov8" title="1">if user.Username == "admin" </span><span class="cov0" title="0">{
+                return errors.New("cannot delete admin user")
+        }</span>
+
+        // Start transaction
+        <span class="cov8" title="1">tx := us.db.Begin()
+
+        // Delete user's course purchases
+        if err := tx.Where("user_id = ?", id).Delete(&amp;models.UserCourse{}).Error; err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        // Delete user's module progress
+        <span class="cov8" title="1">if err := tx.Where("user_id = ?", id).Delete(&amp;models.UserModuleProgress{}).Error; err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        // Delete user
+        <span class="cov8" title="1">if err := tx.Delete(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        <span class="cov8" title="1">tx.Commit()
+        return nil</span>
+}
+
+func (us *UserService) CreateUser(firstName, lastName, username, email, password string, isAdmin bool) (*models.User, error) <span class="cov0" title="0">{
+        // Check if user already exists
+        var existingUser models.User
+        if err := us.db.Where("username = ? OR email = ?", username, email).First(&amp;existingUser).Error; err == nil </span><span class="cov0" title="0">{
+                return nil, errors.New("user with this username or email already exists")
+        }</span>
+
+        // Hash password
+        <span class="cov0" title="0">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Create user
+        <span class="cov0" title="0">user := models.User{
+                FirstName: firstName,
+                LastName:  lastName,
+                Username:  username,
+                Email:     email,
+                Password:  string(hashedPassword),
+                IsAdmin:   isAdmin,
+        }
+
+        if err := us.db.Create(&amp;user).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Remove password from response
+        <span class="cov0" title="0">user.Password = ""
+        return &amp;user, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

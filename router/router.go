@@ -35,15 +35,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	config.AllowHeaders = []string{"*"}
 	r.Use(cors.New(config))
 
-	// Serve static files
-	r.Static("/static", "./static")
-	r.Static("/uploads", "./uploads")
+	// Serve static files with absolute paths
+	r.Static("/static", getAbsolutePath("./static"))
+	r.Static("/uploads", getAbsolutePath("./uploads"))
 
 	// Get database connection
 	db := database.GetDB()
 
 	// Initialize services
-	authService := services.NewAuthService()
+	authService := services.NewAuthService(cfg)
 	courseService := services.NewCourseService(db, cfg)
 	moduleService := services.NewModuleService(db, cfg)
 	userService := services.NewUserService(db)
@@ -71,7 +71,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Setup API routes
 	apiGroup := r.Group("/api")
 	{
-		api.SetupAPIRoutes(apiGroup, apiAuthCtrl, apiAdminCourseCtrl, apiAdminModuleCtrl, apiAdminUserCtrl, apiUserCourseCtrl, apiUserModuleCtrl)
+		api.SetupAPIRoutes(apiGroup, apiAuthCtrl, apiAdminCourseCtrl, apiAdminModuleCtrl, apiAdminUserCtrl, apiUserCourseCtrl, apiUserModuleCtrl, cfg)
 	}
 
 	return r

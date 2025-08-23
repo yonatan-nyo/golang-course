@@ -1,6 +1,7 @@
 package api
 
 import (
+	"yonatan/labpro/config"
 	apiAdminCourse "yonatan/labpro/controllers/api/admin"
 	apiUserCourse "yonatan/labpro/controllers/api/user"
 	"yonatan/labpro/middleware"
@@ -10,11 +11,12 @@ import (
 
 func SetupCourseRoutes(api *gin.RouterGroup,
 	adminCourseController *apiAdminCourse.CourseAPIController,
-	userCourseController *apiUserCourse.CourseAPIController) {
+	userCourseController *apiUserCourse.CourseAPIController,
+	cfg *config.Config) {
 
 	// User course routes
 	courses := api.Group("/courses")
-	courses.Use(middleware.AuthMiddleware())
+	courses.Use(middleware.AuthMiddleware(cfg))
 	{
 		// GET /api/courses
 		courses.GET("", userCourseController.GetCourses)
@@ -28,7 +30,7 @@ func SetupCourseRoutes(api *gin.RouterGroup,
 
 	// Admin course routes
 	adminCourses := api.Group("/courses")
-	adminCourses.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
+	adminCourses.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
 	{
 		// POST /api/courses (admin only)
 		adminCourses.POST("", adminCourseController.CreateCourse)

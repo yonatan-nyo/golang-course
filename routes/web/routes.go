@@ -1,6 +1,8 @@
 package web
 
 import (
+	"os"
+	"path/filepath"
 	webAuth "yonatan/labpro/controllers/web"
 	webAdminCourse "yonatan/labpro/controllers/web/admin"
 	webAdminDashboard "yonatan/labpro/controllers/web/admin"
@@ -18,6 +20,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// getProjectRoot finds the project root by looking for go.mod file
+func getProjectRoot() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	// Walk up the directory tree to find go.mod
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // reached filesystem root
+		}
+		dir = parent
+	}
+
+	return ""
+}
+
+// getTemplatePattern returns the absolute path pattern for templates
+func getTemplatePattern() string {
+	if projectRoot := getProjectRoot(); projectRoot != "" {
+		return filepath.Join(projectRoot, "templates", "**", "*")
+	}
+	return "templates/**/*"
+}
+
 func SetupWebRoutes(r *gin.Engine,
 	authController *webAuth.AuthController,
 	adminDashboardController *webAdminDashboard.DashboardController,
@@ -27,8 +60,8 @@ func SetupWebRoutes(r *gin.Engine,
 	userDashboardController *webUserDashboard.DashboardController,
 	userCourseController *webUserCourse.CourseController,
 	userModuleController *webUserModule.ModuleController) {
-	// Load HTML templates
-	r.LoadHTMLGlob("templates/**/*")
+	// Load HTML templates with absolute path
+	r.LoadHTMLGlob(getTemplatePattern())
 
 	// Web routes (serve HTML pages)
 	webRoutes := r.Group("/")

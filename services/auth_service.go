@@ -10,10 +10,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type AuthService struct{}
+type AuthService struct {
+	config *config.Config
+}
 
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService(cfg *config.Config) *AuthService {
+	return &AuthService{
+		config: cfg,
+	}
 }
 
 func (as *AuthService) Register(firstName, lastName, username, email, password string) (*models.User, error) {
@@ -70,8 +74,6 @@ func (as *AuthService) Login(identifier, password string) (string, *models.User,
 }
 
 func (as *AuthService) generateToken(userID string) (string, error) {
-	cfg := config.Load()
-
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * 1).Unix(), // 1 hour expiration
@@ -79,5 +81,5 @@ func (as *AuthService) generateToken(userID string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(cfg.JWTSecret))
+	return token.SignedString([]byte(as.config.JWTSecret))
 }

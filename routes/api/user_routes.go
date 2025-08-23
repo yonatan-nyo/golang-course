@@ -1,6 +1,7 @@
 package api
 
 import (
+	"yonatan/labpro/config"
 	apiAdminUser "yonatan/labpro/controllers/api/admin"
 	"yonatan/labpro/middleware"
 
@@ -8,11 +9,12 @@ import (
 )
 
 func SetupUserRoutes(api *gin.RouterGroup,
-	adminUserController *apiAdminUser.UserAPIController) {
+	adminUserController *apiAdminUser.UserAPIController,
+	cfg *config.Config) {
 
 	// All user routes are admin-only according to the contract
 	users := api.Group("/users")
-	users.Use(middleware.AuthMiddleware(), middleware.AdminMiddleware())
+	users.Use(middleware.AuthMiddleware(cfg), middleware.AdminMiddleware())
 	{
 		// GET /api/users
 		users.GET("", adminUserController.GetUsers)

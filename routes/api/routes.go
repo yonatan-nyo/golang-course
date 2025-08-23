@@ -1,6 +1,7 @@
 package api
 
 import (
+	"yonatan/labpro/config"
 	apiAuth "yonatan/labpro/controllers/api"
 	apiAdminCourse "yonatan/labpro/controllers/api/admin"
 	apiAdminModule "yonatan/labpro/controllers/api/admin"
@@ -18,10 +19,11 @@ func SetupAPIRoutes(api *gin.RouterGroup,
 	adminModuleController *apiAdminModule.ModuleAPIController,
 	adminUserController *apiAdminUser.UserAPIController,
 	userCourseController *apiUserCourse.CourseAPIController,
-	userModuleController *apiUserModule.ModuleAPIController) {
+	userModuleController *apiUserModule.ModuleAPIController,
+	cfg *config.Config) {
 	// Setup all API route groups
-	SetupAuthRoutes(api, authController)
-	SetupCourseRoutes(api, adminCourseController, userCourseController)
-	SetupModuleRoutes(api, adminModuleController, userModuleController)
-	SetupUserRoutes(api, adminUserController)
+	SetupAuthRoutes(api, authController, cfg)
+	SetupCourseRoutes(api, adminCourseController, userCourseController, cfg)
+	SetupModuleRoutes(api, adminModuleController, userModuleController, cfg)
+	SetupUserRoutes(api, adminUserController, cfg)
 }

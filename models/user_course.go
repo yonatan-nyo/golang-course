@@ -12,8 +12,8 @@ type UserCourse struct {
 	CourseID    string    `json:"course_id" gorm:"not null"`
 	PurchasedAt time.Time `json:"purchased_at"`
 
-	User   User   `json:"-" gorm:"foreignKey:UserID"`
-	Course Course `json:"-" gorm:"foreignKey:CourseID"`
+	User   User   `json:"-" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	Course Course `json:"-" gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE"`
 }
 
 func (uc *UserCourse) BeforeCreate(tx *gorm.DB) error {

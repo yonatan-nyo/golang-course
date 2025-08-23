@@ -9,6 +9,6 @@ type UserModuleProgress struct {
 	IsCompleted bool       `json:"is_completed" gorm:"default:false"`
 	CompletedAt *time.Time `json:"completed_at"`
 
-	User   User   `json:"-" gorm:"foreignKey:UserID"`
-	Module Module `json:"-" gorm:"foreignKey:ModuleID"`
+	User   User   `json:"-" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	Module Module `json:"-" gorm:"foreignKey:ModuleID;constraint:OnDelete:CASCADE"`
 }

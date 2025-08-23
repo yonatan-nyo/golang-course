@@ -160,22 +160,30 @@ func (cs *CourseService) UpdateCourse(course *models.Course) (*models.Course, er
 }
 
 func (cs *CourseService) DeleteCourse(id string) error {
-	// First delete all modules associated with this course
-	if err := cs.db.Where("course_id = ?", id).Delete(&models.Module{}).Error; err != nil {
-		return err
-	}
+	// Use transaction to ensure data consistency
+	return cs.db.Transaction(func(tx *gorm.DB) error {
+		// First delete all user module progress records for modules in this course
+		if err := tx.Where("module_id IN (SELECT id FROM modules WHERE course_id = ?)", id).Delete(&models.UserModuleProgress{}).Error; err != nil {
+			return err
+		}
 
-	// Delete user course relationships
-	if err := cs.db.Where("course_id = ?", id).Delete(&models.UserCourse{}).Error; err != nil {
-		return err
-	}
+		// Then delete all modules associated with this course
+		if err := tx.Where("course_id = ?", id).Delete(&models.Module{}).Error; err != nil {
+			return err
+		}
 
-	// Delete the course
-	if err := cs.db.Delete(&models.Course{}, "id = ?", id).Error; err != nil {
-		return err
-	}
+		// Delete user course relationships
+		if err := tx.Where("course_id = ?", id).Delete(&models.UserCourse{}).Error; err != nil {
+			return err
+		}
 
-	return nil
+		// Finally delete the course
+		if err := tx.Delete(&models.Course{}, "id = ?", id).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (cs *CourseService) BuyCourse(courseID, userID string) (map[string]interface{}, error) {

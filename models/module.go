@@ -13,5 +13,5 @@ type Module struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 
-	Course Course `json:"-" gorm:"foreignKey:CourseID"`
+	Course Course `json:"-" gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE"`
 }

@@ -20,5 +20,5 @@ type Course struct {
 	DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
 	// Relationships
-	Modules []Module `json:"modules" gorm:"foreignKey:CourseID"`
+	Modules []Module `json:"modules" gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE"`
 }

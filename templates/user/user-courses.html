@@ -74,13 +74,6 @@
 
               <!-- Dropdown Menu -->
               <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                <a href="/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                  </svg>
-                  Profile
-                </a>
-                <div class="border-t border-gray-100 my-1"></div>
                 <form action="/auth/logout" method="POST">
                   <button type="submit" class="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                     <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,12 +386,8 @@
         // Primary method: Get from localStorage
         const localStorageToken = localStorage.getItem('authToken');
         if (localStorageToken) {
-          console.log('Token found in localStorage');
           return localStorageToken;
         }
-        
-        // Fallback method: Try to parse from cookies
-        console.log('Trying to get token from cookies:', document.cookie);
         
         // Method 1: Look for JWT tokens (they start with 'ey')
         const cookies = document.cookie.split(';');
@@ -407,7 +396,6 @@
           if (trimmed.startsWith('token=')) {
             const tokenValue = trimmed.substring(6); // Remove 'token='
             if (tokenValue && tokenValue.startsWith('ey')) {
-              console.log('JWT token found in cookies');
               return decodeURIComponent(tokenValue);
             }
           }
@@ -417,19 +405,10 @@
         for (let cookie of cookies) {
           const trimmed = cookie.trim();
           if (trimmed.startsWith('ey')) {
-            console.log('Direct JWT token found in cookies');
             return decodeURIComponent(trimmed);
           }
         }
         
-        // Method 3: Regex fallback
-        const match = document.cookie.match(/(?:^|;\s*)token\s*=\s*([^;]+)/);
-        if (match && match[1]) {
-          console.log('Token found via regex');
-          return decodeURIComponent(match[1]);
-        }
-        
-        console.log('No token found in localStorage or cookies');
         return null;
       }
 
@@ -539,11 +518,6 @@
         
         // Test token access immediately
         const token = getAuthToken();
-        console.log('Token found on page load:', token ? 'Yes' : 'No');
-        if (token) {
-          console.log('Token length:', token.length);
-          console.log('Token preview:', token.substring(0, 20) + '...');
-        }
         
         // Start polling every 1 second
         pollingInterval = setInterval(pollForCourses, 1000);
@@ -555,57 +529,6 @@
           }
         });
       });
-
-      // Manual token setter - call this from browser console: setToken('your_jwt_token_here')
-      window.setToken = function(token) {
-        if (token) {
-          localStorage.setItem('authToken', token);
-          console.log('Token set in localStorage:', token.substring(0, 20) + '...');
-        } else {
-          console.log('Please provide a token: setToken("your_jwt_token_here")');
-        }
-      };
-
-      // Token getter - call this from browser console: getToken()
-      window.getToken = function() {
-        const token = getAuthToken();
-        console.log('Current token:', token ? (token.substring(0, 30) + '...') : 'None');
-        return token;
-      };
-
-      // Debug function - call this from browser console: testAuth()
-      window.testAuth = function() {
-        const token = getAuthToken();
-        console.log('=== Auth Test ===');
-        console.log('All cookies:', document.cookie);
-        console.log('localStorage authToken:', localStorage.getItem('authToken'));
-        console.log('Token found:', token ? 'Yes' : 'No');
-        if (token) {
-          console.log('Token length:', token.length);
-          console.log('Token preview:', token.substring(0, 30) + '...');
-          
-          // Test API call
-          fetch('/api/courses?limit=1', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          }).then(response => {
-            console.log('API Response status:', response.status);
-            return response.json();
-          }).then(data => {
-            console.log('API Response data:', data);
-          }).catch(error => {
-            console.error('API Error:', error);
-          });
-        } else {
-          console.log('No token available. Try:');
-          console.log('1. Login again to set token in localStorage');
-          console.log('2. Or manually set token: setToken("your_jwt_token_here")');
-        }
-        console.log('=== End Auth Test ===');
-      };
     </script>
 
     <!-- CSS for animations -->

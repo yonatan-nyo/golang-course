@@ -66,8 +66,11 @@ func setupCourseTestRouter() *gin.Engine {
 	// Get config for services
 	cfg := config.LoadTestWithProjectRoot()
 
+	// Initialize Redis service for testing (can be nil since Redis is optional)
+	redisService := services.NewRedisService(cfg.RedisAddr, cfg.RedisPassword)
+
 	// Initialize services
-	courseService := services.NewCourseService(courseTestDB, cfg)
+	courseService := services.NewCourseService(courseTestDB, cfg, redisService)
 
 	// Initialize controllers
 	userCourseController := apiUserControllers.NewCourseAPIController(courseService)

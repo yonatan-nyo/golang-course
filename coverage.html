@@ -95,11 +95,13 @@
 				
 				<option value="file19">yonatan/labpro/services/auth_service.go (87.5%)</option>
 				
-				<option value="file20">yonatan/labpro/services/course_service.go (71.3%)</option>
+				<option value="file20">yonatan/labpro/services/course_service.go (75.0%)</option>
 				
 				<option value="file21">yonatan/labpro/services/module_service.go (75.5%)</option>
 				
-				<option value="file22">yonatan/labpro/services/user_service.go (69.4%)</option>
+				<option value="file22">yonatan/labpro/services/redis_service.go (46.4%)</option>
+				
+				<option value="file23">yonatan/labpro/services/user_service.go (69.4%)</option>
 				
 				</select>
 			</div>
@@ -123,13 +125,15 @@ import (
 )
 
 type Config struct {
-        DatabaseURL string
-        JWTSecret   string
-        Port        string
-        Environment string
-        BaseURL     string
-        UploadPath  string
-        MaxFileSize string
+        DatabaseURL   string
+        RedisAddr     string
+        RedisPassword string
+        JWTSecret     string
+        Port          string
+        Environment   string
+        BaseURL       string
+        UploadPath    string
+        MaxFileSize   string
 }
 
 func Load(envFiles ...string) *Config <span class="cov8" title="1">{
@@ -145,13 +149,15 @@ func Load(envFiles ...string) *Config <span class="cov8" title="1">{
         }</span>
 
         <span class="cov8" title="1">return &amp;Config{
-                DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost/labpro_db?sslmode=disable"),
-                JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
-                Port:        getEnv("PORT", "8080"),
-                Environment: getEnv("ENVIRONMENT", "development"),
-                BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
-                UploadPath:  getEnv("UPLOAD_PATH", "./uploads"),
-                MaxFileSize: getEnv("MAX_FILE_SIZE", "10485760"),
+                DatabaseURL:   getEnv("DATABASE_URL", "postgres://user:password@localhost/labpro_db?sslmode=disable"),
+                RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
+                RedisPassword: getEnv("REDIS_PASSWORD", ""),
+                JWTSecret:     getEnv("JWT_SECRET", "your-secret-key"),
+                Port:          getEnv("PORT", "8080"),
+                Environment:   getEnv("ENVIRONMENT", "development"),
+                BaseURL:       getEnv("BASE_URL", "http://localhost:8080"),
+                UploadPath:    getEnv("UPLOAD_PATH", "./uploads"),
+                MaxFileSize:   getEnv("MAX_FILE_SIZE", "10485760"),
         }</span>
 }
 
@@ -1797,8 +1803,8 @@ type UserCourse struct {
         CourseID    string    `json:"course_id" gorm:"not null"`
         PurchasedAt time.Time `json:"purchased_at"`
 
-        User   User   `json:"-" gorm:"foreignKey:UserID"`
-        Course Course `json:"-" gorm:"foreignKey:CourseID"`
+        User   User   `json:"-" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+        Course Course `json:"-" gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE"`
 }
 
 func (uc *UserCourse) BeforeCreate(tx *gorm.DB) error <span class="cov8" title="1">{
@@ -2081,6 +2087,7 @@ func (as *AuthService) generateToken(userID string) (string, error) <span class=
 		<pre class="file" id="file20" style="display: none">package services
 
 import (
+        "context"
         "errors"
         "fmt"
         "io"
@@ -2096,13 +2103,27 @@ import (
 )
 
 type CourseService struct {
-        db     *gorm.DB
-        config *config.Config
+        db           *gorm.DB
+        config       *config.Config
+        redisService *RedisService
 }
 
-func NewCourseService(db *gorm.DB, cfg *config.Config) *CourseService <span class="cov8" title="1">{
-        return &amp;CourseService{db: db, config: cfg}
+func NewCourseService(db *gorm.DB, cfg *config.Config, redisService *RedisService) *CourseService <span class="cov8" title="1">{
+        return &amp;CourseService{
+                db:           db,
+                config:       cfg,
+                redisService: redisService,
+        }
 }</span>
+
+// clearCourseCache invalidates all course-related cache entries
+func (cs *CourseService) clearCourseCache() <span class="cov8" title="1">{
+        if cs.redisService != nil </span><span class="cov8" title="1">{
+                ctx := context.Background()
+                // Clear all keys that start with "courses:"
+                cs.redisService.DeletePattern(ctx, "courses:*")
+        }</span>
+}
 
 // CalculateCourseProgress calculates the progress percentage for a user in a specific course
 func (cs *CourseService) CalculateCourseProgress(userID, courseID string) (float64, int64, int64) <span class="cov8" title="1">{
@@ -2126,11 +2147,34 @@ func (cs *CourseService) CreateCourse(course *models.Course) (*models.Course, er
         if err := cs.db.Create(course).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov8" title="1">return course, nil</span>
+        // Clear course cache after creating new course
+        <span class="cov8" title="1">cs.clearCourseCache()
+        return course, nil</span>
 }
 
 func (cs *CourseService) GetCourses(query string, page, limit int, userID interface{}) ([]map[string]interface{}, map[string]interface{}, error) <span class="cov8" title="1">{
-        var courses []models.Course
+        // Create cache key based on parameters
+        userIDStr := ""
+        if userID != nil </span><span class="cov8" title="1">{
+                userIDStr = fmt.Sprintf("%v", userID)
+        }</span>
+        <span class="cov8" title="1">cacheKey := fmt.Sprintf("courses:%s:%d:%d:%s", query, page, limit, userIDStr)
+
+        // Try to get from cache first
+        if cs.redisService != nil </span><span class="cov8" title="1">{
+                ctx := context.Background()
+                var cacheResult struct {
+                        Courses    []map[string]interface{} `json:"courses"`
+                        Pagination map[string]interface{}   `json:"pagination"`
+                }
+
+                err := cs.redisService.Get(ctx, cacheKey, &amp;cacheResult)
+                if err == nil </span><span class="cov0" title="0">{
+                        return cacheResult.Courses, cacheResult.Pagination, nil
+                }</span>
+        }
+
+        <span class="cov8" title="1">var courses []models.Course
         var total int64
 
         db := cs.db.Model(&amp;models.Course{})
@@ -2184,7 +2228,20 @@ func (cs *CourseService) GetCourses(query string, page, limit int, userID interf
                 "total_items":  total,
         }
 
-        return result, pagination, nil</span>
+        // Cache the result for 5 minutes
+        if cs.redisService != nil </span><span class="cov8" title="1">{
+                ctx := context.Background()
+                cacheData := struct {
+                        Courses    []map[string]interface{} `json:"courses"`
+                        Pagination map[string]interface{}   `json:"pagination"`
+                }{
+                        Courses:    result,
+                        Pagination: pagination,
+                }
+                cs.redisService.Set(ctx, cacheKey, cacheData, 5*time.Minute)
+        }</span>
+
+        <span class="cov8" title="1">return result, pagination, nil</span>
 }
 
 func (cs *CourseService) GetCourseByID(id string, userID interface{}) (map[string]interface{}, error) <span class="cov8" title="1">{
@@ -2236,26 +2293,43 @@ func (cs *CourseService) UpdateCourse(course *models.Course) (*models.Course, er
         if err := cs.db.Save(course).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov8" title="1">return course, nil</span>
+        // Clear course cache after updating course
+        <span class="cov8" title="1">cs.clearCourseCache()
+        return course, nil</span>
 }
 
 func (cs *CourseService) DeleteCourse(id string) error <span class="cov8" title="1">{
-        // First delete all modules associated with this course
-        if err := cs.db.Where("course_id = ?", id).Delete(&amp;models.Module{}).Error; err != nil </span><span class="cov8" title="1">{
-                return err
+        // Use transaction to ensure data consistency
+        err := cs.db.Transaction(func(tx *gorm.DB) error </span><span class="cov8" title="1">{
+                // First delete all user module progress records for modules in this course
+                if err := tx.Where("module_id IN (SELECT id FROM modules WHERE course_id = ?)", id).Delete(&amp;models.UserModuleProgress{}).Error; err != nil </span><span class="cov8" title="1">{
+                        return err
+                }</span>
+
+                // Then delete all modules associated with this course
+                <span class="cov8" title="1">if err := tx.Where("course_id = ?", id).Delete(&amp;models.Module{}).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                // Delete user course relationships
+                <span class="cov8" title="1">if err := tx.Where("course_id = ?", id).Delete(&amp;models.UserCourse{}).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                // Finally delete the course
+                <span class="cov8" title="1">if err := tx.Delete(&amp;models.Course{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">return nil</span>
+        })
+
+        <span class="cov8" title="1">if err == nil </span><span class="cov8" title="1">{
+                // Clear course cache after successful deletion
+                cs.clearCourseCache()
         }</span>
 
-        // Delete user course relationships
-        <span class="cov8" title="1">if err := cs.db.Where("course_id = ?", id).Delete(&amp;models.UserCourse{}).Error; err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        // Delete the course
-        <span class="cov8" title="1">if err := cs.db.Delete(&amp;models.Course{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        <span class="cov8" title="1">return nil</span>
+        <span class="cov8" title="1">return err</span>
 }
 
 func (cs *CourseService) BuyCourse(courseID, userID string) (map[string]interface{}, error) <span class="cov8" title="1">{
@@ -2794,6 +2868,144 @@ func (ms *ModuleService) generateCertificate(userID, courseID string) (string, e
 </pre>
 		
 		<pre class="file" id="file22" style="display: none">package services
+
+import (
+        "context"
+        "encoding/json"
+        "log"
+        "time"
+
+        "github.com/redis/go-redis/v9"
+)
+
+type RedisService struct {
+        client    *redis.Client
+        available bool
+}
+
+func NewRedisService(redisAddr, redisPassword string) *RedisService <span class="cov8" title="1">{
+        service := &amp;RedisService{
+                available: false,
+        }
+
+        // Create Redis client with address and password
+        service.client = redis.NewClient(&amp;redis.Options{
+                Addr:     redisAddr,
+                Username: "default",
+                Password: redisPassword,
+                DB:       0,
+        })
+
+        // Test Redis connection
+        ctx := context.Background()
+        _, err := service.client.Ping(ctx).Result()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Unable to connect to Redis: %v", err)
+                return service
+        }</span>
+
+        <span class="cov8" title="1">service.available = true
+        log.Println("Redis connection established successfully")
+        return service</span>
+}
+
+// IsAvailable checks if Redis is available
+func (rs *RedisService) IsAvailable() bool <span class="cov0" title="0">{
+        return rs.available
+}</span>
+
+// Set stores a value in Redis with expiration
+func (rs *RedisService) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error <span class="cov8" title="1">{
+        if !rs.available </span><span class="cov0" title="0">{
+                return nil // Skip caching if Redis is not available
+        }</span>
+
+        <span class="cov8" title="1">data, err := json.Marshal(value)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Failed to marshal data for Redis: %v", err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">err = rs.client.Set(ctx, key, data, expiration).Err()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Failed to set cache key %s: %v", key, err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// Get retrieves a value from Redis
+func (rs *RedisService) Get(ctx context.Context, key string, dest interface{}) error <span class="cov8" title="1">{
+        if !rs.available </span><span class="cov0" title="0">{
+                return redis.Nil // Return cache miss if Redis is not available
+        }</span>
+
+        <span class="cov8" title="1">data, err := rs.client.Get(ctx, key).Result()
+        if err != nil </span><span class="cov8" title="1">{
+                if err != redis.Nil </span><span class="cov0" title="0">{
+                        log.Printf("Warning: Failed to get cache key %s: %v", key, err)
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        }
+
+        <span class="cov0" title="0">err = json.Unmarshal([]byte(data), dest)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Failed to unmarshal cached data for key %s: %v", key, err)
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Delete removes a key from Redis
+func (rs *RedisService) Delete(ctx context.Context, key string) error <span class="cov0" title="0">{
+        if !rs.available </span><span class="cov0" title="0">{
+                return nil // Skip if Redis is not available
+        }</span>
+
+        <span class="cov0" title="0">err := rs.client.Del(ctx, key).Err()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Failed to delete cache key %s: %v", key, err)
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// DeletePattern removes all keys matching a pattern
+func (rs *RedisService) DeletePattern(ctx context.Context, pattern string) error <span class="cov8" title="1">{
+        if !rs.available </span><span class="cov0" title="0">{
+                return nil // Skip if Redis is not available
+        }</span>
+
+        <span class="cov8" title="1">keys, err := rs.client.Keys(ctx, pattern).Result()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Warning: Failed to get keys with pattern %s: %v", pattern, err)
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if len(keys) &gt; 0 </span><span class="cov8" title="1">{
+                err = rs.client.Del(ctx, keys...).Err()
+                if err != nil </span><span class="cov0" title="0">{
+                        log.Printf("Warning: Failed to delete keys with pattern %s: %v", pattern, err)
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// Close closes the Redis connection
+func (rs *RedisService) Close() error <span class="cov0" title="0">{
+        if rs.client != nil </span><span class="cov0" title="0">{
+                return rs.client.Close()
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file23" style="display: none">package services
 
 import (
         "errors"

@@ -8,13 +8,15 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	JWTSecret   string
-	Port        string
-	Environment string
-	BaseURL     string
-	UploadPath  string
-	MaxFileSize string
+	DatabaseURL   string
+	RedisAddr     string
+	RedisPassword string
+	JWTSecret     string
+	Port          string
+	Environment   string
+	BaseURL       string
+	UploadPath    string
+	MaxFileSize   string
 }
 
 func Load(envFiles ...string) *Config {
@@ -30,13 +32,15 @@ func Load(envFiles ...string) *Config {
 	}
 
 	return &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost/labpro_db?sslmode=disable"),
-		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
-		Port:        getEnv("PORT", "8080"),
-		Environment: getEnv("ENVIRONMENT", "development"),
-		BaseURL:     getEnv("BASE_URL", "http://localhost:8080"),
-		UploadPath:  getEnv("UPLOAD_PATH", "./uploads"),
-		MaxFileSize: getEnv("MAX_FILE_SIZE", "10485760"),
+		DatabaseURL:   getEnv("DATABASE_URL", "postgres://user:password@localhost/labpro_db?sslmode=disable"),
+		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key"),
+		Port:          getEnv("PORT", "8080"),
+		Environment:   getEnv("ENVIRONMENT", "development"),
+		BaseURL:       getEnv("BASE_URL", "http://localhost:8080"),
+		UploadPath:    getEnv("UPLOAD_PATH", "./uploads"),
+		MaxFileSize:   getEnv("MAX_FILE_SIZE", "10485760"),
 	}
 }
 

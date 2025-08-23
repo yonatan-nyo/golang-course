@@ -42,9 +42,12 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Get database connection
 	db := database.GetDB()
 
+	// Initialize Redis service
+	redisService := services.NewRedisService(cfg.RedisAddr, cfg.RedisPassword)
+
 	// Initialize services
 	authService := services.NewAuthService(cfg)
-	courseService := services.NewCourseService(db, cfg)
+	courseService := services.NewCourseService(db, cfg, redisService)
 	moduleService := services.NewModuleService(db, cfg)
 	userService := services.NewUserService(db)
 

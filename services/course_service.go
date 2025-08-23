@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,12 +17,26 @@ import (
 )
 
 type CourseService struct {
-	db     *gorm.DB
-	config *config.Config
+	db           *gorm.DB
+	config       *config.Config
+	redisService *RedisService
 }
 
-func NewCourseService(db *gorm.DB, cfg *config.Config) *CourseService {
-	return &CourseService{db: db, config: cfg}
+func NewCourseService(db *gorm.DB, cfg *config.Config, redisService *RedisService) *CourseService {
+	return &CourseService{
+		db:           db,
+		config:       cfg,
+		redisService: redisService,
+	}
+}
+
+// clearCourseCache invalidates all course-related cache entries
+func (cs *CourseService) clearCourseCache() {
+	if cs.redisService != nil {
+		ctx := context.Background()
+		// Clear all keys that start with "courses:"
+		cs.redisService.DeletePattern(ctx, "courses:*")
+	}
 }
 
 // CalculateCourseProgress calculates the progress percentage for a user in a specific course
@@ -46,10 +61,33 @@ func (cs *CourseService) CreateCourse(course *models.Course) (*models.Course, er
 	if err := cs.db.Create(course).Error; err != nil {
 		return nil, err
 	}
+	// Clear course cache after creating new course
+	cs.clearCourseCache()
 	return course, nil
 }
 
 func (cs *CourseService) GetCourses(query string, page, limit int, userID interface{}) ([]map[string]interface{}, map[string]interface{}, error) {
+	// Create cache key based on parameters
+	userIDStr := ""
+	if userID != nil {
+		userIDStr = fmt.Sprintf("%v", userID)
+	}
+	cacheKey := fmt.Sprintf("courses:%s:%d:%d:%s", query, page, limit, userIDStr)
+
+	// Try to get from cache first
+	if cs.redisService != nil {
+		ctx := context.Background()
+		var cacheResult struct {
+			Courses    []map[string]interface{} `json:"courses"`
+			Pagination map[string]interface{}   `json:"pagination"`
+		}
+
+		err := cs.redisService.Get(ctx, cacheKey, &cacheResult)
+		if err == nil {
+			return cacheResult.Courses, cacheResult.Pagination, nil
+		}
+	}
+
 	var courses []models.Course
 	var total int64
 
@@ -104,6 +142,19 @@ func (cs *CourseService) GetCourses(query string, page, limit int, userID interf
 		"total_items":  total,
 	}
 
+	// Cache the result for 5 minutes
+	if cs.redisService != nil {
+		ctx := context.Background()
+		cacheData := struct {
+			Courses    []map[string]interface{} `json:"courses"`
+			Pagination map[string]interface{}   `json:"pagination"`
+		}{
+			Courses:    result,
+			Pagination: pagination,
+		}
+		cs.redisService.Set(ctx, cacheKey, cacheData, 5*time.Minute)
+	}
+
 	return result, pagination, nil
 }
 
@@ -156,12 +207,14 @@ func (cs *CourseService) UpdateCourse(course *models.Course) (*models.Course, er
 	if err := cs.db.Save(course).Error; err != nil {
 		return nil, err
 	}
+	// Clear course cache after updating course
+	cs.clearCourseCache()
 	return course, nil
 }
 
 func (cs *CourseService) DeleteCourse(id string) error {
 	// Use transaction to ensure data consistency
-	return cs.db.Transaction(func(tx *gorm.DB) error {
+	err := cs.db.Transaction(func(tx *gorm.DB) error {
 		// First delete all user module progress records for modules in this course
 		if err := tx.Where("module_id IN (SELECT id FROM modules WHERE course_id = ?)", id).Delete(&models.UserModuleProgress{}).Error; err != nil {
 			return err
@@ -184,6 +237,13 @@ func (cs *CourseService) DeleteCourse(id string) error {
 
 		return nil
 	})
+
+	if err == nil {
+		// Clear course cache after successful deletion
+		cs.clearCourseCache()
+	}
+
+	return err
 }
 
 func (cs *CourseService) BuyCourse(courseID, userID string) (map[string]interface{}, error) {

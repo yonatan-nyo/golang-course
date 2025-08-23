@@ -151,9 +151,9 @@
 
         <!-- Courses Grid -->
         {{if .Courses}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {{range .Courses}}
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+          <div class="course-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow" data-course-id="{{.id}}">
             <!-- Course Image -->
             <div class="aspect-w-16 aspect-h-9 bg-gray-200">
               {{if .thumbnail_image}}
@@ -196,7 +196,7 @@
                   {{end}}
                   {{end}}
                   {{if gt (len .topics) 3}}
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{
                     +more
                   </span>
                   {{end}}
@@ -297,7 +297,7 @@
       </div>
     </main>
 
-    <!-- JavaScript for dropdown -->
+    <!-- JavaScript for dropdown and course polling -->
     <script>
       function toggleDropdown() {
         const dropdown = document.getElementById('user-dropdown');
@@ -322,6 +322,321 @@
           document.getElementById('dropdown-arrow').style.transform = 'rotate(0deg)';
         }
       });
+
+      // Course polling system
+      let currentCourseIds = new Set();
+      let pollingInterval;
+      let isPolling = false;
+
+      // Initialize current course IDs
+      function initializeCourseIds() {
+        const courseCards = document.querySelectorAll('.course-card');
+        currentCourseIds.clear();
+        courseCards.forEach(card => {
+          const courseId = card.getAttribute('data-course-id');
+          if (courseId) {
+            currentCourseIds.add(courseId);
+          }
+        });
+      }
+
+      // Create course card HTML
+      function createCourseCardHTML(course) {
+        const topicsHTML = course.topics ? course.topics.slice(0, 3).map(topic => 
+          `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${topic}</span>`
+        ).join('') + (course.topics.length > 3 ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">+more</span>' : '') : '';
+
+        const thumbnailHTML = course.thumbnail_image ? 
+          `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-48 object-cover">` :
+          `<div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+            <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>`;
+
+        return `
+          <div class="course-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow new-course-animation" data-course-id="${course.id}">
+            <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+              ${thumbnailHTML}
+            </div>
+            <div class="p-6">
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">${course.title}</h3>
+                ${course.is_purchased ? '<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Owned</span>' : ''}
+              </div>
+              <p class="text-sm text-gray-600 mb-3">By ${course.instructor}</p>
+              ${course.description ? `<p class="text-sm text-gray-700 mb-4 line-clamp-3">${course.description}</p>` : ''}
+              ${topicsHTML ? `<div class="mb-4"><div class="flex flex-wrap gap-1">${topicsHTML}</div></div>` : ''}
+              <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <span class="flex items-center">
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  ${course.total_modules} modules
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold text-gray-900">$${parseFloat(course.price).toFixed(2)}</div>
+                ${course.is_purchased ? 
+                  `<a href="/courses/${course.id}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">View Course</a>` :
+                  `<a href="/courses/${course.id}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">View Details</a>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Get auth token from localStorage or cookie fallback
+      function getAuthToken() {
+        // Primary method: Get from localStorage
+        const localStorageToken = localStorage.getItem('authToken');
+        if (localStorageToken) {
+          console.log('Token found in localStorage');
+          return localStorageToken;
+        }
+        
+        // Fallback method: Try to parse from cookies
+        console.log('Trying to get token from cookies:', document.cookie);
+        
+        // Method 1: Look for JWT tokens (they start with 'ey')
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          const trimmed = cookie.trim();
+          if (trimmed.startsWith('token=')) {
+            const tokenValue = trimmed.substring(6); // Remove 'token='
+            if (tokenValue && tokenValue.startsWith('ey')) {
+              console.log('JWT token found in cookies');
+              return decodeURIComponent(tokenValue);
+            }
+          }
+        }
+        
+        // Method 2: Look for any cookie that starts with 'ey' (JWT pattern)
+        for (let cookie of cookies) {
+          const trimmed = cookie.trim();
+          if (trimmed.startsWith('ey')) {
+            console.log('Direct JWT token found in cookies');
+            return decodeURIComponent(trimmed);
+          }
+        }
+        
+        // Method 3: Regex fallback
+        const match = document.cookie.match(/(?:^|;\s*)token\s*=\s*([^;]+)/);
+        if (match && match[1]) {
+          console.log('Token found via regex');
+          return decodeURIComponent(match[1]);
+        }
+        
+        console.log('No token found in localStorage or cookies');
+        return null;
+      }
+
+      // Poll for new courses 
+      async function pollForCourses() {
+        if (isPolling) return;
+        isPolling = true;
+
+        try {
+          const token = getAuthToken();
+          if (!token) {
+            console.error('No auth token found');
+            return;
+          }
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const currentQuery = urlParams.get('q') || '';
+          const currentPage = urlParams.get('page') || '1';
+
+          const response = await fetch(`/api/courses?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=15`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch courses');
+          }
+
+          const result = await response.json();
+          
+          if (result.status === 'success' && result.data) {
+            const newCourses = result.data;
+            const newCourseIds = new Set(newCourses.map(course => course.id));
+            
+            // Find courses that are new (not in current set)
+            const addedCourses = newCourses.filter(course => !currentCourseIds.has(course.id));
+            
+            if (addedCourses.length > 0) {
+              const coursesGrid = document.getElementById('courses-grid');
+              
+              // Add new courses with animation
+              addedCourses.forEach(course => {
+                const courseHTML = createCourseCardHTML(course);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = courseHTML;
+                const courseCard = tempDiv.firstElementChild;
+                
+                coursesGrid.appendChild(courseCard);
+                currentCourseIds.add(course.id);
+                
+                // Trigger animation after a brief delay
+                setTimeout(() => {
+                  courseCard.classList.remove('new-course-animation');
+                }, 100);
+              });
+
+              // Show notification
+              showNotification(`${addedCourses.length} new course${addedCourses.length > 1 ? 's' : ''} added!`);
+            }
+
+            // Remove courses that are no longer in the API response (if any were deleted)
+            const removedCourseIds = Array.from(currentCourseIds).filter(id => !newCourseIds.has(id));
+            removedCourseIds.forEach(courseId => {
+              const courseCard = document.querySelector(`[data-course-id="${courseId}"]`);
+              if (courseCard) {
+                courseCard.remove();
+                currentCourseIds.delete(courseId);
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error polling for courses:', error);
+        } finally {
+          isPolling = false;
+        }
+      }
+
+      // Show notification
+      function showNotification(message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Slide in
+        setTimeout(() => {
+          notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Slide out and remove after 3 seconds
+        setTimeout(() => {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 300);
+        }, 3000);
+      }
+
+      // Initialize polling when page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        initializeCourseIds();
+        
+        // Test token access immediately
+        const token = getAuthToken();
+        console.log('Token found on page load:', token ? 'Yes' : 'No');
+        if (token) {
+          console.log('Token length:', token.length);
+          console.log('Token preview:', token.substring(0, 20) + '...');
+        }
+        
+        // Start polling every 1 second
+        pollingInterval = setInterval(pollForCourses, 1000);
+        
+        // Stop polling when user leaves the page
+        window.addEventListener('beforeunload', function() {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+          }
+        });
+      });
+
+      // Manual token setter - call this from browser console: setToken('your_jwt_token_here')
+      window.setToken = function(token) {
+        if (token) {
+          localStorage.setItem('authToken', token);
+          console.log('Token set in localStorage:', token.substring(0, 20) + '...');
+        } else {
+          console.log('Please provide a token: setToken("your_jwt_token_here")');
+        }
+      };
+
+      // Token getter - call this from browser console: getToken()
+      window.getToken = function() {
+        const token = getAuthToken();
+        console.log('Current token:', token ? (token.substring(0, 30) + '...') : 'None');
+        return token;
+      };
+
+      // Debug function - call this from browser console: testAuth()
+      window.testAuth = function() {
+        const token = getAuthToken();
+        console.log('=== Auth Test ===');
+        console.log('All cookies:', document.cookie);
+        console.log('localStorage authToken:', localStorage.getItem('authToken'));
+        console.log('Token found:', token ? 'Yes' : 'No');
+        if (token) {
+          console.log('Token length:', token.length);
+          console.log('Token preview:', token.substring(0, 30) + '...');
+          
+          // Test API call
+          fetch('/api/courses?limit=1', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }).then(response => {
+            console.log('API Response status:', response.status);
+            return response.json();
+          }).then(data => {
+            console.log('API Response data:', data);
+          }).catch(error => {
+            console.error('API Error:', error);
+          });
+        } else {
+          console.log('No token available. Try:');
+          console.log('1. Login again to set token in localStorage');
+          console.log('2. Or manually set token: setToken("your_jwt_token_here")');
+        }
+        console.log('=== End Auth Test ===');
+      };
     </script>
+
+    <!-- CSS for animations -->
+    <style>
+      .new-course-animation {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideInUp 0.5s ease-out forwards;
+      }
+
+      @keyframes slideInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    </style>
   </body>
 </html>

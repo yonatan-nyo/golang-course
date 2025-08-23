@@ -96,6 +96,7 @@ func (ac *AuthController) HandleLogin(c *gin.Context) {
     <script>
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userRole', '` + userRole + `');
+        localStorage.setItem('authToken', '` + token + `');
         setTimeout(function() {
             window.location.href = '` + redirectURL + `';
         }, 500);
@@ -199,6 +200,7 @@ func (ac *AuthController) HandleRegister(c *gin.Context) {
     <script>
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userRole', '` + userRole + `');
+        localStorage.setItem('authToken', '` + token + `');
         setTimeout(function() {
             window.location.href = '` + redirectURL + `';
         }, 1000);
@@ -235,6 +237,7 @@ func (ac *AuthController) HandleLogout(c *gin.Context) {
     <script>
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('authToken');
         setTimeout(function() {
             window.location.href = '/auth/login';
         }, 500);

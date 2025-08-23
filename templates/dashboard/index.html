@@ -317,6 +317,183 @@
       // Store login state in localStorage
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userRole", "user");
+
+      // Course polling for new course notifications
+      let lastCourseCount = 0;
+      let pollingInterval;
+      let isPolling = false;
+
+      // Get auth token from localStorage or cookie fallback
+      function getAuthToken() {
+        // Primary method: Get from localStorage
+        const localStorageToken = localStorage.getItem('authToken');
+        if (localStorageToken) {
+          console.log('Token found in localStorage');
+          return localStorageToken;
+        }
+        
+        // Method 1: Manual parsing
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === 'token' && value) {
+            console.log('Token found in cookies');
+            // Decode the cookie value in case it's URL encoded
+            try {
+              return decodeURIComponent(value);
+            } catch (e) {
+              return value;
+            }
+          }
+        }
+        
+        console.log('No token found in localStorage or cookies');
+        return null;
+      }
+
+      // Get initial course count
+      async function getInitialCourseCount() {
+        try {
+          const token = getAuthToken();
+          if (!token) {
+            console.error('No auth token found');
+            return;
+          }
+
+          const response = await fetch('/api/courses?limit=1', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.status === 'success' && result.pagination) {
+              lastCourseCount = result.pagination.total_items || 0;
+            }
+          }
+        } catch (error) {
+          console.error('Error getting initial course count:', error);
+        }
+      }
+
+      // Poll for new courses
+      async function pollForNewCourses() {
+        if (isPolling) return;
+        isPolling = true;
+
+        try {
+          const token = getAuthToken();
+          if (!token) {
+            console.error('No auth token found');
+            return;
+          }
+
+          const response = await fetch('/api/courses?limit=1', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.status === 'success' && result.pagination) {
+              const currentCourseCount = result.pagination.total_items || 0;
+              
+              if (currentCourseCount > lastCourseCount && lastCourseCount > 0) {
+                const newCoursesCount = currentCourseCount - lastCourseCount;
+                showNewCourseNotification(newCoursesCount);
+              }
+              
+              lastCourseCount = currentCourseCount;
+            }
+          }
+        } catch (error) {
+          console.error('Error polling for new courses:', error);
+        } finally {
+          isPolling = false;
+        }
+      }
+
+      // Show new course notification
+      function showNewCourseNotification(count) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300 max-w-sm';
+        notification.innerHTML = `
+          <div class="flex items-start">
+            <svg class="h-6 w-6 text-white mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <div class="flex-1">
+              <p class="font-medium">New Course${count > 1 ? 's' : ''} Available!</p>
+              <p class="text-sm text-blue-100 mt-1">${count} new course${count > 1 ? 's have' : ' has'} been added. Check them out!</p>
+              <a href="/courses" class="inline-block mt-2 text-sm font-medium text-white border-b border-white hover:border-transparent transition-colors">
+                View Courses →
+              </a>
+            </div>
+            <button onclick="closeNotification(this)" class="ml-2 text-blue-200 hover:text-white transition-colors">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Slide in
+        setTimeout(() => {
+          notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          if (notification.parentNode) {
+            closeNotification(notification.querySelector('button'));
+          }
+        }, 10000);
+      }
+
+      // Close notification function
+      function closeNotification(button) {
+        const notification = button.closest('div.fixed');
+        if (notification) {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => {
+            if (notification.parentNode) {
+              document.body.removeChild(notification);
+            }
+          }, 300);
+        }
+      }
+
+      // Initialize polling when page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        // Test token access immediately
+        const token = getAuthToken();
+        console.log('Token found on page load:', token ? 'Yes' : 'No');
+        if (token) {
+          console.log('Token length:', token.length);
+          console.log('Token preview:', token.substring(0, 20) + '...');
+        }
+        
+        getInitialCourseCount();
+        
+        // Start polling every 1 second for new courses
+        pollingInterval = setInterval(pollForNewCourses, 1000);
+        
+        // Stop polling when user leaves the page
+        window.addEventListener('beforeunload', function() {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+          }
+        });
+      });
     </script>
   </body>
 </html>

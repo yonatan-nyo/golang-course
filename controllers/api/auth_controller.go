@@ -18,6 +18,17 @@ func NewAuthAPIController(authService *services.AuthService) *AuthAPIController 
 	}
 }
 
+// Login godoc
+// @Summary      User login
+// @Description  Authenticate user with identifier (username/email) and password
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        login  body      object{identifier=string,password=string}  true  "Login credentials"
+// @Success      200    {object}  object{status=string,message=string,data=object{username=string,token=string}}
+// @Failure      400    {object}  object{status=string,message=string,data=object}
+// @Failure      401    {object}  object{status=string,message=string,data=object}
+// @Router       /auth/login [post]
 func (aac *AuthAPIController) Login(c *gin.Context) {
 	var req struct {
 		Identifier string `json:"identifier" binding:"required"`
@@ -55,6 +66,17 @@ func (aac *AuthAPIController) Login(c *gin.Context) {
 	})
 }
 
+// Register godoc
+// @Summary      User registration
+// @Description  Register a new user account
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        register  body      object{username=string,email=string,first_name=string,last_name=string,password=string,confirm_password=string}  true  "Registration data"
+// @Success      201       {object}  object{status=string,message=string,data=object{username=string,token=string}}
+// @Failure      400       {object}  object{status=string,message=string,data=object}
+// @Failure      409       {object}  object{status=string,message=string,data=object}
+// @Router       /auth/register [post]
 func (aac *AuthAPIController) Register(c *gin.Context) {
 	var req struct {
 		Username        string `json:"username" binding:"required"`
@@ -107,6 +129,13 @@ func (aac *AuthAPIController) Register(c *gin.Context) {
 	})
 }
 
+// Logout godoc
+// @Summary      User logout
+// @Description  Logout current user
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  object{status=string,message=string,data=object}
+// @Router       /auth/logout [post]
 func (aac *AuthAPIController) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
@@ -115,6 +144,15 @@ func (aac *AuthAPIController) Logout(c *gin.Context) {
 	})
 }
 
+// GetProfile godoc
+// @Summary      Get current user profile
+// @Description  Get the profile of the currently authenticated user
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  object{status=string,message=string,data=object{id=string,username=string,email=string,first_name=string,last_name=string,role=string}}
+// @Failure      401  {object}  object{status=string,message=string,data=object}
+// @Router       /auth/self [get]
 func (aac *AuthAPIController) GetProfile(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

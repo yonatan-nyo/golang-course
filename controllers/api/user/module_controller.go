@@ -19,6 +19,19 @@ func NewModuleAPIController(moduleService *services.ModuleService) *ModuleAPICon
 	}
 }
 
+// GetCourseModules godoc
+// @Summary      Get modules of a course
+// @Description  Get a paginated list of modules for a specific course
+// @Tags         modules
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId  path      string  true   "Course ID"
+// @Param        page      query     int     false  "Page number (default: 1)"
+// @Param        limit     query     int     false  "Items per page (default: 15, max: 50)"
+// @Success      200       {object}  object{status=string,message=string,data=array,pagination=object}
+// @Failure      401       {object}  object{error=string}
+// @Failure      500       {object}  object{status=string,message=string,data=object}
+// @Router       /modules/{courseId} [get]
 func (mac *ModuleAPIController) GetCourseModules(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -55,6 +68,17 @@ func (mac *ModuleAPIController) GetCourseModules(c *gin.Context) {
 	})
 }
 
+// GetModuleByID godoc
+// @Summary      Get module by ID
+// @Description  Get detailed information about a specific module
+// @Tags         modules
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Module ID"
+// @Success      200 {object}  object{status=string,message=string,data=object}
+// @Failure      401 {object}  object{error=string}
+// @Failure      404 {object}  object{status=string,message=string,data=object}
+// @Router       /modules/detail/{id} [get]
 func (mac *ModuleAPIController) GetModuleByID(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -89,6 +113,17 @@ func (mac *ModuleAPIController) GetModuleByID(c *gin.Context) {
 	})
 }
 
+// CompleteModule godoc
+// @Summary      Mark module as completed
+// @Description  Mark a specific module as completed by the user
+// @Tags         modules
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Module ID"
+// @Success      200 {object}  object{status=string,message=string,data=object}
+// @Failure      400 {object}  object{status=string,message=string,data=object}
+// @Failure      401 {object}  object{error=string}
+// @Router       /modules/{id}/complete [post]
 func (mac *ModuleAPIController) CompleteModule(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

@@ -19,6 +19,25 @@ func NewCourseAPIController(courseService *services.CourseService) *CourseAPICon
 	}
 }
 
+// CreateCourse godoc
+// @Summary      Create a new course (Admin only)
+// @Description  Create a new course with title, description, instructor, price, topics and thumbnail
+// @Tags         admin-courses
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        title        formData  string   true   "Course title"
+// @Param        description  formData  string   false  "Course description"
+// @Param        instructor   formData  string   true   "Course instructor"
+// @Param        price        formData  string   true   "Course price"
+// @Param        topics       formData  []string false  "Course topics array"
+// @Param        thumbnail    formData  file     false  "Course thumbnail image"
+// @Success      201          {object}  object{status=string,message=string,data=object}
+// @Failure      400          {object}  object{status=string,message=string,data=object}
+// @Failure      401          {object}  object{error=string}
+// @Failure      403          {object}  object{error=string}
+// @Failure      500          {object}  object{status=string,message=string,data=object}
+// @Router       /courses [post]
 func (cac *CourseAPIController) CreateCourse(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -100,6 +119,27 @@ func (cac *CourseAPIController) CreateCourse(c *gin.Context) {
 	})
 }
 
+// UpdateCourse godoc
+// @Summary      Update a course (Admin only)
+// @Description  Update an existing course with new information
+// @Tags         admin-courses
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId     path      string   true   "Course ID"
+// @Param        title        formData  string   false  "Course title"
+// @Param        description  formData  string   false  "Course description"
+// @Param        instructor   formData  string   false  "Course instructor"
+// @Param        price        formData  string   false  "Course price"
+// @Param        topics       formData  []string false  "Course topics array"
+// @Param        thumbnail    formData  file     false  "Course thumbnail image"
+// @Success      200          {object}  object{status=string,message=string,data=object}
+// @Failure      400          {object}  object{status=string,message=string,data=object}
+// @Failure      401          {object}  object{error=string}
+// @Failure      403          {object}  object{error=string}
+// @Failure      404          {object}  object{status=string,message=string,data=object}
+// @Failure      500          {object}  object{status=string,message=string,data=object}
+// @Router       /courses/{courseId} [put]
 func (cac *CourseAPIController) UpdateCourse(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -200,6 +240,18 @@ func (cac *CourseAPIController) UpdateCourse(c *gin.Context) {
 	})
 }
 
+// DeleteCourse godoc
+// @Summary      Delete a course (Admin only)
+// @Description  Delete an existing course and all its associated data
+// @Tags         admin-courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId  path      string  true  "Course ID"
+// @Success      200       {object}  object{status=string,message=string,data=object}
+// @Failure      401       {object}  object{error=string}
+// @Failure      403       {object}  object{error=string}
+// @Failure      500       {object}  object{status=string,message=string,data=object}
+// @Router       /courses/{courseId} [delete]
 func (cac *CourseAPIController) DeleteCourse(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

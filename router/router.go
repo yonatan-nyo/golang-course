@@ -23,6 +23,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter(cfg *config.Config) *gin.Engine {
@@ -75,6 +77,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	apiGroup := r.Group("/api")
 	{
 		api.SetupAPIRoutes(apiGroup, apiAuthCtrl, apiAdminCourseCtrl, apiAdminModuleCtrl, apiAdminUserCtrl, apiUserCourseCtrl, apiUserModuleCtrl, cfg)
+	}
+
+	// Setup Swagger documentation (only in development)
+	if cfg.Environment != "production" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
 	return r

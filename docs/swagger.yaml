@@ -1,0 +1,1446 @@
+basePath: /api
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a learning management system API server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Labpro API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with identifier (username/email) and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          properties:
+            identifier:
+              type: string
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                properties:
+                  token:
+                    type: string
+                  username:
+                    type: string
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Logout current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      summary: User logout
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account
+      parameters:
+      - description: Registration data
+        in: body
+        name: register
+        required: true
+        schema:
+          properties:
+            confirm_password:
+              type: string
+            email:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            password:
+              type: string
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              data:
+                properties:
+                  token:
+                    type: string
+                  username:
+                    type: string
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      summary: User registration
+      tags:
+      - auth
+  /auth/self:
+    get:
+      description: Get the profile of the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                properties:
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  id:
+                    type: string
+                  last_name:
+                    type: string
+                  role:
+                    type: string
+                  username:
+                    type: string
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - auth
+  /courses:
+    get:
+      description: Get a paginated list of available courses with optional search
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 15, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: array
+              message:
+                type: string
+              pagination:
+                type: object
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all available courses
+      tags:
+      - courses
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new course with title, description, instructor, price,
+        topics and thumbnail
+      parameters:
+      - description: Course title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Course description
+        in: formData
+        name: description
+        type: string
+      - description: Course instructor
+        in: formData
+        name: instructor
+        required: true
+        type: string
+      - description: Course price
+        in: formData
+        name: price
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Course topics array
+        in: formData
+        items:
+          type: string
+        name: topics
+        type: array
+      - description: Course thumbnail image
+        in: formData
+        name: thumbnail
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new course (Admin only)
+      tags:
+      - admin-courses
+  /courses/{courseId}:
+    delete:
+      description: Delete an existing course and all its associated data
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a course (Admin only)
+      tags:
+      - admin-courses
+    get:
+      description: Get detailed information about a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get course by ID
+      tags:
+      - courses
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update an existing course with new information
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      - description: Course title
+        in: formData
+        name: title
+        type: string
+      - description: Course description
+        in: formData
+        name: description
+        type: string
+      - description: Course instructor
+        in: formData
+        name: instructor
+        type: string
+      - description: Course price
+        in: formData
+        name: price
+        type: string
+      - collectionFormat: csv
+        description: Course topics array
+        in: formData
+        items:
+          type: string
+        name: topics
+        type: array
+      - description: Course thumbnail image
+        in: formData
+        name: thumbnail
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a course (Admin only)
+      tags:
+      - admin-courses
+  /courses/{courseId}/buy:
+    post:
+      description: Purchase/enroll in a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Purchase a course
+      tags:
+      - courses
+  /courses/{courseId}/modules/reorder:
+    put:
+      consumes:
+      - application/json
+      description: Update the order of modules within a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      - description: Module order data
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder modules within a course (Admin only)
+      tags:
+      - admin-modules
+  /courses/my-courses:
+    get:
+      description: Get a paginated list of courses that the user has purchased/enrolled
+        in
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 15, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: array
+              message:
+                type: string
+              pagination:
+                type: object
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's enrolled courses
+      tags:
+      - courses
+  /modules/{courseId}:
+    get:
+      description: Get a paginated list of modules for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 15, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: array
+              message:
+                type: string
+              pagination:
+                type: object
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get modules of a course
+      tags:
+      - modules
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new module for a specific course with title, description,
+        PDF and video files
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      - description: Module title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Module description
+        in: formData
+        name: description
+        type: string
+      - description: PDF file
+        in: formData
+        name: pdf_file
+        type: file
+      - description: Video file
+        in: formData
+        name: video_file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new module (Admin only)
+      tags:
+      - admin-modules
+  /modules/{id}:
+    delete:
+      description: Delete an existing module and all its associated data
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a module (Admin only)
+      tags:
+      - admin-modules
+  /modules/{id}/complete:
+    post:
+      description: Mark a specific module as completed by the user
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark module as completed
+      tags:
+      - modules
+  /modules/detail/{id}:
+    get:
+      description: Get detailed information about a specific module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get module by ID
+      tags:
+      - modules
+  /modules/update/{id}:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update an existing module with new information
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Module title
+        in: formData
+        name: title
+        type: string
+      - description: Module description
+        in: formData
+        name: description
+        type: string
+      - description: PDF file
+        in: formData
+        name: pdf_file
+        type: file
+      - description: Video file
+        in: formData
+        name: video_file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a module (Admin only)
+      tags:
+      - admin-modules
+  /users:
+    get:
+      description: Retrieve a paginated list of all users with optional search functionality
+      parameters:
+      - description: Search query for username
+        in: query
+        name: q
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (default: 15, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  type: object
+                type: array
+              message:
+                type: string
+              pagination:
+                type: object
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users with pagination (Admin only)
+      tags:
+      - admin-users
+  /users/{id}:
+    delete:
+      description: Delete a user account permanently. Admins cannot delete their own
+        account.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User deleted successfully
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a user (Admin only)
+      tags:
+      - admin-users
+    get:
+      description: Retrieve detailed information for a specific user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user details by ID (Admin only)
+      tags:
+      - admin-users
+    put:
+      consumes:
+      - application/json
+      description: Update a user's profile information including email, username,
+        names, and optionally password
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User update data
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                properties:
+                  balance:
+                    type: number
+                  first_name:
+                    type: string
+                  id:
+                    type: string
+                  last_name:
+                    type: string
+                  username:
+                    type: string
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user information (Admin only)
+      tags:
+      - admin-users
+  /users/{id}/balance:
+    post:
+      consumes:
+      - application/json
+      description: Increment or decrement a user's balance by a specific amount
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Balance increment data
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                properties:
+                  balance:
+                    type: number
+                  id:
+                    type: string
+                  username:
+                    type: string
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+              status:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user balance (Admin only)
+      tags:
+      - admin-users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

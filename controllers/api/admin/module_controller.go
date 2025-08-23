@@ -18,6 +18,24 @@ func NewModuleAPIController(moduleService *services.ModuleService) *ModuleAPICon
 	}
 }
 
+// CreateModule godoc
+// @Summary      Create a new module (Admin only)
+// @Description  Create a new module for a specific course with title, description, PDF and video files
+// @Tags         admin-modules
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId     path      string  true   "Course ID"
+// @Param        title        formData  string  true   "Module title"
+// @Param        description  formData  string  false  "Module description"
+// @Param        pdf_file     formData  file    false  "PDF file"
+// @Param        video_file   formData  file    false  "Video file"
+// @Success      201          {object}  object{status=string,message=string,data=object}
+// @Failure      400          {object}  object{status=string,message=string,data=object}
+// @Failure      401          {object}  object{error=string}
+// @Failure      403          {object}  object{error=string}
+// @Failure      500          {object}  object{status=string,message=string,data=object}
+// @Router       /modules/{courseId} [post]
 func (mac *ModuleAPIController) CreateModule(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -97,6 +115,25 @@ func (mac *ModuleAPIController) CreateModule(c *gin.Context) {
 	})
 }
 
+// UpdateModule godoc
+// @Summary      Update a module (Admin only)
+// @Description  Update an existing module with new information
+// @Tags         admin-modules
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id           path      string  true   "Module ID"
+// @Param        title        formData  string  false  "Module title"
+// @Param        description  formData  string  false  "Module description"
+// @Param        pdf_file     formData  file    false  "PDF file"
+// @Param        video_file   formData  file    false  "Video file"
+// @Success      200          {object}  object{status=string,message=string,data=object}
+// @Failure      400          {object}  object{status=string,message=string,data=object}
+// @Failure      401          {object}  object{error=string}
+// @Failure      403          {object}  object{error=string}
+// @Failure      404          {object}  object{status=string,message=string,data=object}
+// @Failure      500          {object}  object{status=string,message=string,data=object}
+// @Router       /modules/update/{id} [put]
 func (mac *ModuleAPIController) UpdateModule(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -197,6 +234,18 @@ func (mac *ModuleAPIController) UpdateModule(c *gin.Context) {
 	})
 }
 
+// DeleteModule godoc
+// @Summary      Delete a module (Admin only)
+// @Description  Delete an existing module and all its associated data
+// @Tags         admin-modules
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Module ID"
+// @Success      200 {object}  object{status=string,message=string,data=object}
+// @Failure      401 {object}  object{error=string}
+// @Failure      403 {object}  object{error=string}
+// @Failure      500 {object}  object{status=string,message=string,data=object}
+// @Router       /modules/{id} [delete]
 func (mac *ModuleAPIController) DeleteModule(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -224,6 +273,21 @@ func (mac *ModuleAPIController) DeleteModule(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// ReorderModules godoc
+// @Summary      Reorder modules within a course (Admin only)
+// @Description  Update the order of modules within a specific course
+// @Tags         admin-modules
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId  path      string  true   "Course ID"
+// @Param        request   body      object  true   "Module order data" example({"module_orders":[{"module_id":"123","order":1},{"module_id":"456","order":2}]})
+// @Success      200       {object}  object{status=string,message=string,data=object}
+// @Failure      400       {object}  object{error=string}
+// @Failure      401       {object}  object{error=string}
+// @Failure      403       {object}  object{error=string}
+// @Failure      500       {object}  object{status=string,message=string,data=object}
+// @Router       /courses/{courseId}/modules/reorder [put]
 func (mac *ModuleAPIController) ReorderModules(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

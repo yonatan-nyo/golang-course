@@ -19,6 +19,19 @@ func NewCourseAPIController(courseService *services.CourseService) *CourseAPICon
 	}
 }
 
+// GetCourses godoc
+// @Summary      Get all available courses
+// @Description  Get a paginated list of available courses with optional search
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        q      query     string  false  "Search query"
+// @Param        page   query     int     false  "Page number (default: 1)"
+// @Param        limit  query     int     false  "Items per page (default: 15, max: 50)"
+// @Success      200    {object}  object{status=string,message=string,data=array,pagination=object}
+// @Failure      401    {object}  object{error=string}
+// @Failure      500    {object}  object{status=string,message=string,data=object}
+// @Router       /courses [get]
 func (cac *CourseAPIController) GetCourses(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -55,6 +68,17 @@ func (cac *CourseAPIController) GetCourses(c *gin.Context) {
 	})
 }
 
+// GetCourseByID godoc
+// @Summary      Get course by ID
+// @Description  Get detailed information about a specific course
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId  path      string  true  "Course ID"
+// @Success      200       {object}  object{status=string,message=string,data=object}
+// @Failure      401       {object}  object{error=string}
+// @Failure      404       {object}  object{status=string,message=string,data=object}
+// @Router       /courses/{courseId} [get]
 func (cac *CourseAPIController) GetCourseByID(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -83,6 +107,19 @@ func (cac *CourseAPIController) GetCourseByID(c *gin.Context) {
 	})
 }
 
+// GetMyCourses godoc
+// @Summary      Get user's enrolled courses
+// @Description  Get a paginated list of courses that the user has purchased/enrolled in
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        q      query     string  false  "Search query"
+// @Param        page   query     int     false  "Page number (default: 1)"
+// @Param        limit  query     int     false  "Items per page (default: 15, max: 50)"
+// @Success      200    {object}  object{status=string,message=string,data=array,pagination=object}
+// @Failure      401    {object}  object{error=string}
+// @Failure      500    {object}  object{status=string,message=string,data=object}
+// @Router       /courses/my-courses [get]
 func (cac *CourseAPIController) GetMyCourses(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -119,6 +156,17 @@ func (cac *CourseAPIController) GetMyCourses(c *gin.Context) {
 	})
 }
 
+// PurchaseCourse godoc
+// @Summary      Purchase a course
+// @Description  Purchase/enroll in a specific course
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        courseId  path      string  true  "Course ID"
+// @Success      200       {object}  object{status=string,message=string,data=object}
+// @Failure      400       {object}  object{status=string,message=string,data=object}
+// @Failure      401       {object}  object{error=string}
+// @Router       /courses/{courseId}/buy [post]
 func (cac *CourseAPIController) PurchaseCourse(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {

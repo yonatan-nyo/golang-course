@@ -17,6 +17,7 @@ type Config struct {
 	BaseURL       string
 	UploadPath    string
 	MaxFileSize   string
+	CloudinaryURL string
 }
 
 func Load(envFiles ...string) *Config {
@@ -41,6 +42,7 @@ func Load(envFiles ...string) *Config {
 		BaseURL:       getEnv("BASE_URL", "http://localhost:8080"),
 		UploadPath:    getEnv("UPLOAD_PATH", "./uploads"),
 		MaxFileSize:   getEnv("MAX_FILE_SIZE", "10485760"),
+		CloudinaryURL: getEnv("CLOUDINARY_URL", ""),
 	}
 }
 

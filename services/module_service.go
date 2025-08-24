@@ -16,12 +16,30 @@ import (
 )
 
 type ModuleService struct {
-	db     *gorm.DB
-	config *config.Config
+	db                *gorm.DB
+	config            *config.Config
+	cloudinaryService *CloudinaryService
 }
 
 func NewModuleService(db *gorm.DB, cfg *config.Config) *ModuleService {
-	return &ModuleService{db: db, config: cfg}
+	var cloudinaryService *CloudinaryService
+	if cfg.CloudinaryURL != "" {
+		var err error
+		cloudinaryService, err = NewCloudinaryService(cfg.CloudinaryURL)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize Cloudinary service: %v. Will use local storage.", err)
+		} else {
+			log.Printf("Cloudinary service initialized successfully")
+		}
+	} else {
+		log.Printf("Cloudinary URL not configured. Using local storage for file uploads.")
+	}
+
+	return &ModuleService{
+		db:                db,
+		config:            cfg,
+		cloudinaryService: cloudinaryService,
+	}
 }
 
 func (ms *ModuleService) CreateModule(courseID, title, description string, pdfURL, videoURL *string) (*models.Module, error) {
@@ -299,37 +317,51 @@ func (ms *ModuleService) CheckCourseAccess(userID, courseID string) (bool, error
 func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) {
 	log.Printf("SavePDF: Starting to save PDF file: %s (size: %d bytes)", file.Filename, file.Size)
 
+	// Try Cloudinary first if configured
+	if ms.cloudinaryService != nil {
+		log.Printf("SavePDF: Using Cloudinary service")
+		return ms.cloudinaryService.UploadPDF(file)
+	}
+
+	// Fall back to local storage
+	log.Printf("SavePDF: Using local storage")
+	return ms.savePDFLocally(file)
+}
+
+func (ms *ModuleService) savePDFLocally(file *multipart.FileHeader) (string, error) {
+	log.Printf("savePDFLocally: Starting to save PDF file: %s (size: %d bytes)", file.Filename, file.Size)
+
 	// Validate file type
 	contentType := file.Header.Get("Content-Type")
-	log.Printf("SavePDF: File content type: %s", contentType)
+	log.Printf("savePDFLocally: File content type: %s", contentType)
 	if contentType != "application/pdf" {
-		log.Printf("SavePDF: Invalid file type: %s", contentType)
+		log.Printf("savePDFLocally: Invalid file type: %s", contentType)
 		return "", errors.New("invalid file type: only PDF files are allowed")
 	}
 
 	// Validate file size (10MB limit)
 	if file.Size > 10*1024*1024 {
-		log.Printf("SavePDF: File too large: %d bytes", file.Size)
+		log.Printf("savePDFLocally: File too large: %d bytes", file.Size)
 		return "", errors.New("file size too large: maximum 10MB allowed for PDF files")
 	}
 
 	// Create uploads directory if it doesn't exist
 	uploadDir := "./uploads/pdfs"
-	log.Printf("SavePDF: Creating upload directory: %s", uploadDir)
+	log.Printf("savePDFLocally: Creating upload directory: %s", uploadDir)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		log.Printf("SavePDF: Failed to create upload directory: %v", err)
+		log.Printf("savePDFLocally: Failed to create upload directory: %v", err)
 		return "", fmt.Errorf("failed to create upload directory: %v", err)
 	}
 
 	// Generate unique filename
 	filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
 	filePath := filepath.Join(uploadDir, filename)
-	log.Printf("SavePDF: Generated file path: %s", filePath)
+	log.Printf("savePDFLocally: Generated file path: %s", filePath)
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		log.Printf("SavePDF: Failed to open uploaded file: %v", err)
+		log.Printf("savePDFLocally: Failed to open uploaded file: %v", err)
 		return "", fmt.Errorf("failed to open uploaded file: %v", err)
 	}
 	defer src.Close()
@@ -337,7 +369,7 @@ func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) {
 	// Create destination file
 	dst, err := os.Create(filePath)
 	if err != nil {
-		log.Printf("SavePDF: Failed to create destination file: %v", err)
+		log.Printf("savePDFLocally: Failed to create destination file: %v", err)
 		return "", fmt.Errorf("failed to create destination file: %v", err)
 	}
 	defer dst.Close()
@@ -347,24 +379,38 @@ func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) {
 	if err != nil {
 		// Clean up created file on error
 		os.Remove(filePath)
-		log.Printf("SavePDF: Failed to copy file content: %v", err)
+		log.Printf("savePDFLocally: Failed to copy file content: %v", err)
 		return "", fmt.Errorf("failed to save file: %v", err)
 	}
 
-	log.Printf("SavePDF: Successfully wrote %d bytes to %s", bytesWritten, filePath)
+	log.Printf("savePDFLocally: Successfully wrote %d bytes to %s", bytesWritten, filePath)
 
 	// Return complete URL including base URL from config
 	resultURL := fmt.Sprintf("%s/uploads/pdfs/%s", ms.config.BaseURL, filename)
-	log.Printf("SavePDF: Generated URL: %s", resultURL)
+	log.Printf("savePDFLocally: Generated URL: %s", resultURL)
 	return resultURL, nil
 }
 
 func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
 	log.Printf("SaveVideo: Starting to save video file: %s (size: %d bytes)", file.Filename, file.Size)
 
+	// Try Cloudinary first if configured
+	if ms.cloudinaryService != nil {
+		log.Printf("SaveVideo: Using Cloudinary service")
+		return ms.cloudinaryService.UploadVideo(file)
+	}
+
+	// Fall back to local storage
+	log.Printf("SaveVideo: Using local storage")
+	return ms.saveVideoLocally(file)
+}
+
+func (ms *ModuleService) saveVideoLocally(file *multipart.FileHeader) (string, error) {
+	log.Printf("saveVideoLocally: Starting to save video file: %s (size: %d bytes)", file.Filename, file.Size)
+
 	// Validate file type (basic check)
 	contentType := file.Header.Get("Content-Type")
-	log.Printf("SaveVideo: File content type: %s", contentType)
+	log.Printf("saveVideoLocally: File content type: %s", contentType)
 	validVideoTypes := []string{
 		"video/mp4",
 		"video/avi",
@@ -384,33 +430,33 @@ func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
 	}
 
 	if !isValidType {
-		log.Printf("SaveVideo: Invalid file type: %s", contentType)
+		log.Printf("saveVideoLocally: Invalid file type: %s", contentType)
 		return "", errors.New("invalid file type: only video files (MP4, AVI, MOV, WebM, OGG) are allowed")
 	}
 
 	// Validate file size (100MB limit)
 	if file.Size > 100*1024*1024 {
-		log.Printf("SaveVideo: File too large: %d bytes", file.Size)
+		log.Printf("saveVideoLocally: File too large: %d bytes", file.Size)
 		return "", errors.New("file size too large: maximum 100MB allowed for video files")
 	}
 
 	// Create uploads directory if it doesn't exist
 	uploadDir := "./uploads/videos"
-	log.Printf("SaveVideo: Creating upload directory: %s", uploadDir)
+	log.Printf("saveVideoLocally: Creating upload directory: %s", uploadDir)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		log.Printf("SaveVideo: Failed to create upload directory: %v", err)
+		log.Printf("saveVideoLocally: Failed to create upload directory: %v", err)
 		return "", fmt.Errorf("failed to create upload directory: %v", err)
 	}
 
 	// Generate unique filename
 	filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
 	filePath := filepath.Join(uploadDir, filename)
-	log.Printf("SaveVideo: Generated file path: %s", filePath)
+	log.Printf("saveVideoLocally: Generated file path: %s", filePath)
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		log.Printf("SaveVideo: Failed to open uploaded file: %v", err)
+		log.Printf("saveVideoLocally: Failed to open uploaded file: %v", err)
 		return "", fmt.Errorf("failed to open uploaded file: %v", err)
 	}
 	defer src.Close()
@@ -418,7 +464,7 @@ func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
 	// Create destination file
 	dst, err := os.Create(filePath)
 	if err != nil {
-		log.Printf("SaveVideo: Failed to create destination file: %v", err)
+		log.Printf("saveVideoLocally: Failed to create destination file: %v", err)
 		return "", fmt.Errorf("failed to create destination file: %v", err)
 	}
 	defer dst.Close()
@@ -428,15 +474,15 @@ func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
 	if err != nil {
 		// Clean up created file on error
 		os.Remove(filePath)
-		log.Printf("SaveVideo: Failed to copy file content: %v", err)
+		log.Printf("saveVideoLocally: Failed to copy file content: %v", err)
 		return "", fmt.Errorf("failed to save file: %v", err)
 	}
 
-	log.Printf("SaveVideo: Successfully wrote %d bytes to %s", bytesWritten, filePath)
+	log.Printf("saveVideoLocally: Successfully wrote %d bytes to %s", bytesWritten, filePath)
 
 	// Return complete URL including base URL from config
 	resultURL := fmt.Sprintf("%s/uploads/videos/%s", ms.config.BaseURL, filename)
-	log.Printf("SaveVideo: Generated URL: %s", resultURL)
+	log.Printf("saveVideoLocally: Generated URL: %s", resultURL)
 	return resultURL, nil
 }
 

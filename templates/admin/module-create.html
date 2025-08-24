@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Buat Modul Baru - Grocademy Admin" />
+    <title>{{.Title}} - Grocademy Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#16a34a", // green-600
+              secondary: "#15803d", // green-700
+              accent: "#22c55e", // green-500
+              dark: "#064e3b", // green-900
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-green-50 min-h-screen">
+    <div class="h-screen flex overflow-hidden bg-green-50">
+      <!-- Sidebar -->
+      <div class="flex flex-col w-64 bg-dark">
+        <div class="flex flex-col h-0 flex-1 overflow-y-auto">
+          <div class="flex items-center h-16 flex-shrink-0 px-4 bg-dark">
+            <div class="flex items-center">
+              <div class="h-8 w-8 bg-accent rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                </svg>
+              </div>
+              <h1 class="ml-3 text-white text-lg font-bold">Grocademy</h1>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex-1 flex flex-col overflow-y-auto">
+            <nav class="flex-1 px-2 py-4 space-y-1">
+              <!-- Dashboard -->
+              <a href="/admin" class="text-gray-300 hover:bg-primary hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                </svg>
+                Dashboard
+              </a>
+
+              <!-- Users -->
+              <a href="/admin/users" class="text-gray-300 hover:bg-primary hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Users
+              </a>
+
+              <!-- Courses -->
+              <a href="/admin/courses" class="bg-primary text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <svg class="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                Courses
+              </a>
+            </nav>
+
+            <!-- Simple User Info with Logout -->
+            <div class="flex-shrink-0 border-t border-green-800 p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="h-10 w-10 bg-primary rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">{{printf "%.1s" .User.FirstName}}{{printf "%.1s" .User.LastName}}</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-white">{{.User.FirstName}} {{.User.LastName}}</p>
+                    <p class="text-xs text-gray-300">Administrator</p>
+                  </div>
+                </div>
+                <form action="/auth/logout" method="POST" class="inline">
+                  <button type="submit" class="text-red-300 hover:text-red-100 p-2 rounded-md hover:bg-red-700 transition-colors" title="Logout">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="flex flex-col flex-1 overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+          <div class="flex items-center justify-between px-6 py-4">
+            <div>
+              <div class="flex items-center space-x-2 text-sm text-gray-500 mb-1">
+                <a href="/admin/courses" class="hover:text-gray-700">Courses</a>
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                {{if .Course}}
+                <a href="/admin/courses/{{index .Course "id"}}/modules" class="hover:text-gray-700">{{index .Course "title"}} Modules</a>
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                {{end}}
+                <span>Create Module</span>
+              </div>
+              <h1 class="text-2xl font-semibold text-gray-900">Create New Module</h1>
+              {{if .Course}}
+              <p class="text-sm text-gray-600">Add a new learning module to "{{index .Course "title"}}"</p>
+              {{else}}
+              <p class="text-sm text-gray-600">Add a new learning module with content</p>
+              {{end}}
+            </div>
+          </div>
+        </header>
+
+        <!-- Main content area -->
+        <main class="flex-1 overflow-y-auto">
+          <div class="px-6 py-6">
+            <div class="max-w-4xl mx-auto">
+              <!-- Error Messages -->
+              {{if .Error}}
+              <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex">
+                  <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                  </svg>
+                  <p class="ml-3 text-sm text-red-700">{{.Error}}</p>
+                </div>
+              </div>
+              {{end}}
+
+              <!-- Create Module Form -->
+              <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold text-gray-900">Module Information</h3>
+                  <p class="text-sm text-gray-600">Enter the details for the new module</p>
+                </div>
+
+                <form id="moduleForm" enctype="multipart/form-data" class="px-6 py-6 space-y-6">
+                  <!-- Course Selection or Display -->
+                  {{if .Course}}
+                  <input type="hidden" name="course_id" value="{{index .Course "id"}}">
+                  
+                  <!-- Course Info Display -->
+                  <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                      <svg class="h-5 w-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      </svg>
+                      <div>
+                        <p class="text-sm font-medium text-green-800">Creating module for:</p>
+                        <p class="text-lg font-semibold text-green-900">{{index .Course "title"}}</p>
+                        <p class="text-sm text-green-600">by {{index .Course "instructor"}}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {{else}}
+                  <!-- Course Selection Dropdown -->
+                  <div>
+                    <label for="course_id" class="block text-sm font-medium text-gray-700 mb-2">Course *</label>
+                    <select id="course_id" name="course_id" required 
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                      <option value="">Select a course</option>
+                      {{range .Courses}}
+                      <option value="{{.id}}" {{if eq $.CourseID .id}}selected{{end}}>{{.title}}</option>
+                      {{end}}
+                    </select>
+                  </div>
+                  {{end}}
+
+                  <!-- Module Title -->
+                  <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Module Title *</label>
+                    <input type="text" id="title" name="title" required 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+                           placeholder="Enter module title">
+                  </div>
+
+                  <!-- Module Description -->
+                  <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea id="description" name="description" rows="4" 
+                              class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+                              placeholder="Enter module description"></textarea>
+                  </div>
+
+                  <!-- Content Upload Section -->
+                  <div class="space-y-6">
+                    <div>
+                      <h4 class="text-lg font-medium text-gray-900 mb-4">Module Content</h4>
+                      <p class="text-sm text-gray-600 mb-4">Upload content files for this module. You can upload both PDF and video files.</p>
+                    </div>
+
+                    <!-- PDF Upload -->
+                    <div>
+                      <label for="pdf_file" class="block text-sm font-medium text-gray-700 mb-2">
+                        PDF Document
+                        <span class="text-gray-500 font-normal">(Optional)</span>
+                      </label>
+                      <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          <div class="flex text-sm text-gray-600">
+                            <label for="pdf_file" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-secondary focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                              <span>Upload a PDF file</span>
+                              <input id="pdf_file" name="pdf_file" type="file" accept=".pdf" class="sr-only">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                          </div>
+                          <p class="text-xs text-gray-500">PDF up to 10MB</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Video Upload -->
+                    <div>
+                      <label for="video_file" class="block text-sm font-medium text-gray-700 mb-2">
+                        Video Content
+                        <span class="text-gray-500 font-normal">(Optional)</span>
+                      </label>
+                      <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                          </svg>
+                          <div class="flex text-sm text-gray-600">
+                            <label for="video_file" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-secondary focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                              <span>Upload a video file</span>
+                              <input id="video_file" name="video_file" type="file" accept="video/*" class="sr-only">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                          </div>
+                          <p class="text-xs text-gray-500">MP4, AVI, MOV up to 100MB</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Form Actions -->
+                  <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                    {{if .Course}}
+                    <a href="/admin/courses/{{index .Course "id"}}/modules" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                      Cancel
+                    </a>
+                    {{else}}
+                    <a href="/admin/courses" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                      Cancel
+                    </a>
+                    {{end}}
+                    <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors">
+                      Create Module
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // File input preview functionality
+      function setupFileInput(inputId, labelText) {
+        const input = document.getElementById(inputId);
+        if (!input) {
+          console.error('File input not found:', inputId);
+          return;
+        }
+        
+        // Find the label that contains the text to update
+        const labelElement = input.parentElement.querySelector('span');
+        if (!labelElement) {
+          console.error('Label element not found for:', inputId);
+          return;
+        }
+        
+        input.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          console.log(`File change event for ${inputId}:`, file ? file.name : 'no file');
+          
+          if (file) {
+            // Validate file size
+            const maxSize = inputId === 'pdf_file' ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for PDF, 100MB for video
+            if (file.size > maxSize) {
+              const maxSizeText = inputId === 'pdf_file' ? '10MB' : '100MB';
+              alert(`File size too large. Maximum allowed size is ${maxSizeText}.`);
+              input.value = '';
+              labelElement.textContent = labelText;
+              labelElement.parentElement.classList.remove('text-primary');
+              return;
+            }
+            
+            // Validate file type
+            if (inputId === 'pdf_file') {
+              if (file.type !== 'application/pdf') {
+                alert('Only PDF files are allowed.');
+                input.value = '';
+                labelElement.textContent = labelText;
+                labelElement.parentElement.classList.remove('text-primary');
+                return;
+              }
+            } else if (inputId === 'video_file') {
+              const validVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'];
+              if (!validVideoTypes.includes(file.type)) {
+                alert('Only video files (MP4, AVI, MOV, WebM, OGG) are allowed.');
+                input.value = '';
+                labelElement.textContent = labelText;
+                labelElement.parentElement.classList.remove('text-primary');
+                return;
+              }
+            }
+            
+            labelElement.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            labelElement.parentElement.classList.add('text-primary');
+          } else {
+            labelElement.textContent = labelText;
+            labelElement.parentElement.classList.remove('text-primary');
+          }
+        });
+      }
+
+      // Initialize file inputs when DOM is loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, setting up file inputs');
+        setupFileInput('pdf_file', 'Upload a PDF file');
+        setupFileInput('video_file', 'Upload a video file');
+      });
+      
+      // Form submission with fetch
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('moduleForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          console.log('Form submission started');
+          
+          const submitButton = e.target.querySelector('button[type="submit"]');
+          const originalText = submitButton.textContent;
+          
+          try {
+            // Disable submit button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creating...';
+            
+            // Get form data with null checks
+            const courseIdInput = document.querySelector('input[name="course_id"], select[name="course_id"]');
+            const titleInput = document.querySelector('input[name="title"]');
+            const descriptionInput = document.querySelector('textarea[name="description"]');
+            const pdfFileInput = document.getElementById('pdf_file');
+            const videoFileInput = document.getElementById('video_file');
+            
+            console.log('Found inputs:', {
+              courseIdInput: !!courseIdInput,
+              titleInput: !!titleInput,
+              descriptionInput: !!descriptionInput,
+              pdfFileInput: !!pdfFileInput,
+              videoFileInput: !!videoFileInput
+            });
+            
+            // Check if inputs exist
+            if (!titleInput) {
+              alert('Title input not found.');
+              return;
+            }
+            
+            const courseId = courseIdInput ? courseIdInput.value : '';
+            const title = titleInput.value;
+            const description = descriptionInput ? descriptionInput.value : '';
+            const pdfFile = pdfFileInput && pdfFileInput.files ? pdfFileInput.files[0] : null;
+            const videoFile = videoFileInput && videoFileInput.files ? videoFileInput.files[0] : null;
+            
+            console.log('Form values:', {
+              courseId: courseId,
+              title: title,
+              description: description,
+              pdfFile: pdfFile ? pdfFile.name : 'none',
+              videoFile: videoFile ? videoFile.name : 'none',
+              pdfFileCount: pdfFileInput ? pdfFileInput.files.length : 0,
+              videoFileCount: videoFileInput ? videoFileInput.files.length : 0
+            });
+            
+            // Validation
+            if (!courseId || !title) {
+              alert('Course ID and title are required.');
+              return;
+            }
+            
+            if (!pdfFile && !videoFile) {
+              alert('Please select at least one file (PDF or video) for the module content.');
+              return;
+            }
+            
+            // Create FormData
+            const formData = new FormData();
+            formData.append('course_id', courseId);
+            formData.append('title', title);
+            formData.append('description', description);
+            
+            if (pdfFile) {
+              console.log('Adding PDF file:', pdfFile.name, pdfFile.size, 'bytes', pdfFile.type);
+              formData.append('pdf_file', pdfFile);
+            }
+            
+            if (videoFile) {
+              console.log('Adding video file:', videoFile.name, videoFile.size, 'bytes', videoFile.type);
+              formData.append('video_file', videoFile);
+            }
+            
+            // Log FormData contents
+            console.log('FormData contents:');
+            for (let [key, value] of formData.entries()) {
+              if (value instanceof File) {
+                console.log(key + ':', value.name, value.size, 'bytes', value.type);
+              } else {
+                console.log(key + ':', value);
+              }
+            }
+            
+            // Submit form
+            console.log('Submitting form to /admin/modules/create');
+            const response = await fetch('/admin/modules/create', {
+              method: 'POST',
+              body: formData
+            });
+            
+            console.log('Response received:', response.status, response.statusText);
+            
+            if (response.ok) {
+              // Check if response is a redirect
+              if (response.redirected || response.url.includes('success=')) {
+                console.log('Redirecting to:', response.url);
+                window.location.href = response.url;
+              } else {
+                // Parse response and redirect manually
+                const courseIdParam = courseId;
+                const redirectUrl = `/admin/modules?course_id=${courseIdParam}&success=Module created successfully`;
+                console.log('Manual redirect to:', redirectUrl);
+                window.location.href = redirectUrl;
+              }
+            } else {
+              // Handle error
+              const responseText = await response.text();
+              console.error('Server response:', responseText);
+              alert('Failed to create module. Please check the console for details.');
+            }
+            
+          } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred while creating the module: ' + error.message);
+          } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

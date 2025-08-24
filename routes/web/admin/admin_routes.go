@@ -31,6 +31,10 @@ func SetupAdminRoutes(webRoutes *gin.RouterGroup,
 		adminRoutes.POST("/courses/:id/edit", adminCourseController.HandleUpdateCourse)
 		adminRoutes.DELETE("/courses/:id", adminCourseController.HandleDeleteCourse)
 
+		// Course modules management
+		adminRoutes.GET("/courses/:id/modules", adminModuleController.ShowCourseModulesPage)
+		adminRoutes.GET("/courses/:id/modules/create", adminModuleController.ShowCreateModulePageForCourse)
+
 		// User management routes
 		adminRoutes.GET("/users", adminUserController.ShowUsersPage)
 		adminRoutes.GET("/users/create", adminUserController.ShowCreateUserPage)

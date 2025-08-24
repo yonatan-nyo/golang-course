@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func NewModuleService(db *gorm.DB, cfg *config.Config) *ModuleService {
 func (ms *ModuleService) CreateModule(courseID, title, description string, pdfURL, videoURL *string) (*models.Module, error) {
 	// Get the next order number for this course
 	var maxOrder int
-	ms.db.Model(&models.Module{}).Where("course_id = ?", courseID).Select("COALESCE(MAX(order), 0)").Scan(&maxOrder)
+	ms.db.Model(&models.Module{}).Where("course_id = ?", courseID).Select("COALESCE(MAX(\"order\"), 0)").Scan(&maxOrder)
 
 	module := models.Module{
 		CourseID:     courseID,
@@ -48,7 +49,7 @@ func (ms *ModuleService) GetModules(courseID string, userID interface{}, page, l
 	var modules []models.Module
 	var total int64
 
-	db := ms.db.Model(&models.Module{}).Where("course_id = ?", courseID)
+	db := ms.db.Model(&models.Module{}).Preload("Course").Where("course_id = ?", courseID)
 
 	// Count total
 	db.Count(&total)
@@ -70,25 +71,45 @@ func (ms *ModuleService) GetModules(courseID string, userID interface{}, page, l
 			isCompleted = (err == nil && progress.IsCompleted)
 		}
 
+		courseInfo := map[string]interface{}{
+			"id":         module.Course.ID,
+			"title":      module.Course.Title,
+			"instructor": module.Course.Instructor,
+		}
+
 		result[i] = map[string]interface{}{
 			"id":            module.ID,
 			"course_id":     module.CourseID,
+			"course":        courseInfo,
 			"title":         module.Title,
 			"description":   module.Description,
 			"order":         module.Order,
 			"pdf_content":   module.PDFContent,
 			"video_content": module.VideoContent,
 			"is_completed":  isCompleted,
-			"created_at":    module.CreatedAt,
+			"created_at":    module.CreatedAt.Format("Jan 2, 2006"),
 			"updated_at":    module.UpdatedAt,
 		}
 	}
 
 	totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+
+	nextPage := page + 1
+	if nextPage > totalPages {
+		nextPage = totalPages
+	}
+
 	pagination := map[string]interface{}{
 		"current_page": page,
 		"total_pages":  totalPages,
 		"total_items":  total,
+		"prev_page":    prevPage,
+		"next_page":    nextPage,
 	}
 
 	return result, pagination, nil
@@ -177,7 +198,7 @@ func (ms *ModuleService) ReorderModules(courseID string, moduleOrder []struct {
 	tx := ms.db.Begin()
 
 	for _, item := range moduleOrder {
-		if err := tx.Model(&models.Module{}).Where("id = ? AND course_id = ?", item.ID, courseID).Update("order", item.Order).Error; err != nil {
+		if err := tx.Model(&models.Module{}).Where("id = ? AND course_id = ?", item.ID, courseID).Update("\"order\"", item.Order).Error; err != nil {
 			tx.Rollback()
 			return nil, err
 		}
@@ -276,71 +297,147 @@ func (ms *ModuleService) CheckCourseAccess(userID, courseID string) (bool, error
 }
 
 func (ms *ModuleService) SavePDF(file *multipart.FileHeader) (string, error) {
+	log.Printf("SavePDF: Starting to save PDF file: %s (size: %d bytes)", file.Filename, file.Size)
+
+	// Validate file type
+	contentType := file.Header.Get("Content-Type")
+	log.Printf("SavePDF: File content type: %s", contentType)
+	if contentType != "application/pdf" {
+		log.Printf("SavePDF: Invalid file type: %s", contentType)
+		return "", errors.New("invalid file type: only PDF files are allowed")
+	}
+
+	// Validate file size (10MB limit)
+	if file.Size > 10*1024*1024 {
+		log.Printf("SavePDF: File too large: %d bytes", file.Size)
+		return "", errors.New("file size too large: maximum 10MB allowed for PDF files")
+	}
+
 	// Create uploads directory if it doesn't exist
 	uploadDir := "./uploads/pdfs"
+	log.Printf("SavePDF: Creating upload directory: %s", uploadDir)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		return "", err
+		log.Printf("SavePDF: Failed to create upload directory: %v", err)
+		return "", fmt.Errorf("failed to create upload directory: %v", err)
 	}
 
 	// Generate unique filename
 	filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
-	filepath := filepath.Join(uploadDir, filename)
+	filePath := filepath.Join(uploadDir, filename)
+	log.Printf("SavePDF: Generated file path: %s", filePath)
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return "", err
+		log.Printf("SavePDF: Failed to open uploaded file: %v", err)
+		return "", fmt.Errorf("failed to open uploaded file: %v", err)
 	}
 	defer src.Close()
 
 	// Create destination file
-	dst, err := os.Create(filepath)
+	dst, err := os.Create(filePath)
 	if err != nil {
-		return "", err
+		log.Printf("SavePDF: Failed to create destination file: %v", err)
+		return "", fmt.Errorf("failed to create destination file: %v", err)
 	}
 	defer dst.Close()
 
 	// Copy file content
-	if _, err = io.Copy(dst, src); err != nil {
-		return "", err
+	bytesWritten, err := io.Copy(dst, src)
+	if err != nil {
+		// Clean up created file on error
+		os.Remove(filePath)
+		log.Printf("SavePDF: Failed to copy file content: %v", err)
+		return "", fmt.Errorf("failed to save file: %v", err)
 	}
 
+	log.Printf("SavePDF: Successfully wrote %d bytes to %s", bytesWritten, filePath)
+
 	// Return complete URL including base URL from config
-	return fmt.Sprintf("%s/uploads/pdfs/%s", ms.config.BaseURL, filename), nil
+	resultURL := fmt.Sprintf("%s/uploads/pdfs/%s", ms.config.BaseURL, filename)
+	log.Printf("SavePDF: Generated URL: %s", resultURL)
+	return resultURL, nil
 }
 
 func (ms *ModuleService) SaveVideo(file *multipart.FileHeader) (string, error) {
+	log.Printf("SaveVideo: Starting to save video file: %s (size: %d bytes)", file.Filename, file.Size)
+
+	// Validate file type (basic check)
+	contentType := file.Header.Get("Content-Type")
+	log.Printf("SaveVideo: File content type: %s", contentType)
+	validVideoTypes := []string{
+		"video/mp4",
+		"video/avi",
+		"video/mov",
+		"video/quicktime",
+		"video/x-msvideo",
+		"video/webm",
+		"video/ogg",
+	}
+
+	isValidType := false
+	for _, validType := range validVideoTypes {
+		if contentType == validType {
+			isValidType = true
+			break
+		}
+	}
+
+	if !isValidType {
+		log.Printf("SaveVideo: Invalid file type: %s", contentType)
+		return "", errors.New("invalid file type: only video files (MP4, AVI, MOV, WebM, OGG) are allowed")
+	}
+
+	// Validate file size (100MB limit)
+	if file.Size > 100*1024*1024 {
+		log.Printf("SaveVideo: File too large: %d bytes", file.Size)
+		return "", errors.New("file size too large: maximum 100MB allowed for video files")
+	}
+
 	// Create uploads directory if it doesn't exist
 	uploadDir := "./uploads/videos"
+	log.Printf("SaveVideo: Creating upload directory: %s", uploadDir)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		return "", err
+		log.Printf("SaveVideo: Failed to create upload directory: %v", err)
+		return "", fmt.Errorf("failed to create upload directory: %v", err)
 	}
 
 	// Generate unique filename
 	filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
-	filepath := filepath.Join(uploadDir, filename)
+	filePath := filepath.Join(uploadDir, filename)
+	log.Printf("SaveVideo: Generated file path: %s", filePath)
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return "", err
+		log.Printf("SaveVideo: Failed to open uploaded file: %v", err)
+		return "", fmt.Errorf("failed to open uploaded file: %v", err)
 	}
 	defer src.Close()
 
 	// Create destination file
-	dst, err := os.Create(filepath)
+	dst, err := os.Create(filePath)
 	if err != nil {
-		return "", err
+		log.Printf("SaveVideo: Failed to create destination file: %v", err)
+		return "", fmt.Errorf("failed to create destination file: %v", err)
 	}
 	defer dst.Close()
 
 	// Copy file content
-	if _, err = io.Copy(dst, src); err != nil {
-		return "", err
+	bytesWritten, err := io.Copy(dst, src)
+	if err != nil {
+		// Clean up created file on error
+		os.Remove(filePath)
+		log.Printf("SaveVideo: Failed to copy file content: %v", err)
+		return "", fmt.Errorf("failed to save file: %v", err)
 	}
 
+	log.Printf("SaveVideo: Successfully wrote %d bytes to %s", bytesWritten, filePath)
+
 	// Return complete URL including base URL from config
-	return fmt.Sprintf("%s/uploads/videos/%s", ms.config.BaseURL, filename), nil
+	resultURL := fmt.Sprintf("%s/uploads/videos/%s", ms.config.BaseURL, filename)
+	log.Printf("SaveVideo: Generated URL: %s", resultURL)
+	return resultURL, nil
 }
 
 func (ms *ModuleService) generateCertificate(userID, courseID string) (string, error) {

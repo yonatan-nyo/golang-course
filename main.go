@@ -45,6 +45,9 @@ func main() {
 	// Setup router
 	r := router.SetupRouter(cfg)
 
+	// Set maximum multipart memory (100 MB for video uploads)
+	r.MaxMultipartMemory = 100 << 20
+
 	// Start server
 	log.Printf("Server starting on port %s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
